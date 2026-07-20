@@ -1,15 +1,6 @@
 package party.stoat.patchwork.client.screen;
 
 import com.google.gson.Gson;
-import com.mojang.blaze3d.GpuFormat;
-import com.mojang.blaze3d.PrimitiveTopology;
-import com.mojang.blaze3d.buffers.GpuBuffer;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.textures.FilterMode;
-import com.mojang.blaze3d.textures.GpuTexture;
-import com.mojang.blaze3d.textures.GpuTextureView;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -29,7 +20,6 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 import party.stoat.patchwork.Patchwork;
-import party.stoat.patchwork.PatchworkClient;
 import party.stoat.patchwork.block.SFControllerMenu;
 import party.stoat.patchwork.client.Bezier4;
 import party.stoat.patchwork.client.screen.components.*;
@@ -53,9 +43,6 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
     private Renderable.Layout lastLayout;
     private Renderable root;
     public EditorState state;
-
-    private GpuTexture toCloseTex;
-    private GpuTextureView toCloseView;
 
     private Renderable rightSidebar;
     private Renderable leftSidebar;
@@ -340,7 +327,7 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
         }
     }
 
-    record Line(List<Vec3> points, int color) {}
+    public record Line(List<Vec3> points, int color) {}
 
     private List<Line> getLines(int mouseX, int mouseY) {
         List<Line> out = new ArrayList<>();
@@ -418,116 +405,7 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
 
         if(lines.isEmpty()) return;
 
-        var device = RenderSystem.getDevice();
-        var encoder = RenderSystem.getDevice().createCommandEncoder();
-
-        var mc = Minecraft.getInstance();
-        var target = mc.gameRenderer.mainRenderTarget();
-
-        var tex = device.createTexture("", GpuTexture.USAGE_RENDER_ATTACHMENT | GpuTexture.USAGE_TEXTURE_BINDING, GpuFormat.RGBA8_UNORM, mc.getWindow().getWidth() * 2, mc.getWindow().getHeight() * 2, 1, 1);
-        var view = device.createTextureView(tex);
-
-        var pass = encoder.createRenderPass(() -> "patchwork lines", view, Optional.empty());
-
-        var sampler = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR);
-
-        pass.setPipeline(PatchworkClient.LINE);
-
-        var builder = new BufferBuilder(new ByteBufferBuilder(128), PrimitiveTopology.TRIANGLES, PatchworkClient.POS_COL_FLOAT);
-
-        int vertCount = 0;
-
-        for(var points : lines) {
-            float hwidth = 0.7f;
-
-            for(int i = 0; i < points.points().size() - 1; i++) {
-                Vec3 a3 = points.points().get(i);
-                Vec3 b3 = points.points().get(i + 1);
-
-                Vec2 a = new Vec2((float) a3.x, (float) a3.y);
-                Vec2 b = new Vec2((float) b3.x, (float) b3.y);
-
-                var dir = b.add(a.negated()).normalized();
-
-                var ortho1 = new Vec2(-dir.y, dir.x).scale(hwidth * 2.0f);
-                var ortho2 = new Vec2(dir.y, -dir.x).scale(hwidth * 2.0f);
-
-                var x1 = ortho1.add(a).x;
-                var x2 = ortho2.add(a).x;
-                var x3 = ortho1.add(b).x;
-                var x4 = ortho2.add(b).x;
-
-                var y1 = ortho1.add(a).y;
-                var y2 = ortho2.add(a).y;
-                var y3 = ortho1.add(b).y;
-                var y4 = ortho2.add(b).y;
-
-                int col = (points.color() & 0x00ffffff) | 0xcc000000;
-
-                builder.addVertex(x1, y1, 0.0f).setColor(col).setLineWidth((float) a3.z);
-                builder.addVertex(x2, y2, 0.0f).setColor(col).setLineWidth((float) a3.z);
-                builder.addVertex(x3, y3, 0.0f).setColor(col).setLineWidth((float) a3.z);
-                builder.addVertex(x2, y2, 0.0f).setColor(col).setLineWidth((float) b3.z);
-                builder.addVertex(x4, y4, 0.0f).setColor(col).setLineWidth((float) b3.z);
-                builder.addVertex(x3, y3, 0.0f).setColor(col).setLineWidth((float) b3.z);
-
-                vertCount += 6;
-            }
-
-            for(int i = 0; i < points.points().size() - 1; i++) {
-                Vec3 a3 = points.points().get(i);
-                Vec3 b3 = points.points().get(i + 1);
-
-                Vec2 a = new Vec2((float) a3.x, (float) a3.y);
-                Vec2 b = new Vec2((float) b3.x, (float) b3.y);
-
-                var dir = b.add(a.negated()).normalized();
-
-                var ortho1 = new Vec2(-dir.y, dir.x).scale(hwidth);
-                var ortho2 = new Vec2(dir.y, -dir.x).scale(hwidth);
-
-                var x1 = ortho1.add(a).x;
-                var x2 = ortho2.add(a).x;
-                var x3 = ortho1.add(b).x;
-                var x4 = ortho2.add(b).x;
-
-                var y1 = ortho1.add(a).y;
-                var y2 = ortho2.add(a).y;
-                var y3 = ortho1.add(b).y;
-                var y4 = ortho2.add(b).y;
-
-                builder.addVertex(x1, y1, 0.0f).setColor(points.color()).setLineWidth((float) a3.z);
-                builder.addVertex(x2, y2, 0.0f).setColor(points.color()).setLineWidth((float) a3.z);
-                builder.addVertex(x3, y3, 0.0f).setColor(points.color()).setLineWidth((float) a3.z);
-                builder.addVertex(x2, y2, 0.0f).setColor(points.color()).setLineWidth((float) b3.z);
-                builder.addVertex(x4, y4, 0.0f).setColor(points.color()).setLineWidth((float) b3.z);
-                builder.addVertex(x3, y3, 0.0f).setColor(points.color()).setLineWidth((float) b3.z);
-
-                vertCount += 6;
-            }
-
-        }
-
-        try(var m = builder.build()) {
-            GpuBuffer buf = device.createBuffer(null, GpuBuffer.USAGE_VERTEX, m.vertexBuffer());
-
-            RenderSystem.bindDefaultUniforms(pass);
-            pass.setVertexBuffer(0, buf.slice());
-            pass.draw(vertCount, 1, 0, 0);
-        }
-
-        pass.close();
-
-        graphics.enableScissor(this.canvas.layoutCache.x(), this.canvas.layoutCache.y(), this.canvas.layoutCache.x() + this.canvas.layoutCache.width(), this.canvas.layoutCache.y() + this.canvas.layoutCache.height());
-        graphics.blit(view, sampler, 0, 0, mc.getWindow().getGuiScaledWidth(), mc.getWindow().getGuiScaledHeight(), 0.0F, 1.0F, 1.0F, 0.0F);
-        graphics.disableScissor();
-
-        if(toCloseView != null) toCloseView.close();
-        if(toCloseTex != null) toCloseTex.close();
-
-        toCloseTex = tex;
-        toCloseView = view;
-
+        graphics.submitGuiElementRenderState(new BezierCurveRenderState(lines));
     }
 
     @Override

@@ -2,13 +2,17 @@ package party.stoat.patchwork;
 
 import com.mojang.blaze3d.GpuFormat;
 import com.mojang.blaze3d.PrimitiveTopology;
+import com.mojang.blaze3d.pipeline.BlendFunction;
+import com.mojang.blaze3d.pipeline.ColorTargetState;
 import com.mojang.blaze3d.pipeline.DepthStencilState;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.CompareOp;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.renderer.BindGroupLayouts;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -30,11 +34,8 @@ import static net.minecraft.client.renderer.RenderPipelines.LINES_SNIPPET;
 public class PatchworkClient {
 
     public static RenderPipeline LINE;
-    public static VertexFormat POS_COL_FLOAT = VertexFormat.builder(0)
-            .addAttribute("Position", GpuFormat.RGB32_FLOAT)
-            .addAttribute("Color", GpuFormat.RGBA8_UNORM)
-            .addAttribute("t", GpuFormat.R32_FLOAT)
-            .build();
+    public static VertexFormat POS_COL_FLOAT = VertexFormat.builder(0).addAttribute("Position", GpuFormat.RGB32_FLOAT).addAttribute("Color", GpuFormat.RGBA8_UNORM).addAttribute("t", GpuFormat.R32_FLOAT).build();
+
 
     public PatchworkClient(ModContainer container) {
         // Allows NeoForge to create a config screen for this mod's configs.
@@ -45,13 +46,8 @@ public class PatchworkClient {
 
     @SubscribeEvent
     static void onClientSetup(FMLClientSetupEvent event) {
-        LINE = RenderPipeline.builder()
-                .withLocation(Identifier.fromNamespaceAndPath("patchwork", "pipelines/line"))
-                .withVertexShader(Identifier.fromNamespaceAndPath("patchwork", "line"))
-                .withFragmentShader(Identifier.fromNamespaceAndPath("patchwork", "line"))
-                .withBindGroupLayout(BindGroupLayouts.PROJECTION)
-                .withVertexBinding(0, POS_COL_FLOAT)
-                .withPrimitiveTopology(PrimitiveTopology.TRIANGLES)
-                .build();
+        LINE = RenderPipeline.builder(new RenderPipeline.Snippet[]{RenderPipelines.GUI_SNIPPET}).withLocation("pipeline/gui").withPrimitiveTopology(PrimitiveTopology.TRIANGLES).withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, true)).withoutStencilTest().withCull(false).build();
+
+
     }
 }
