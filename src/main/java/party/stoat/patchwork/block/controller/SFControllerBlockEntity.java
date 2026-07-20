@@ -1,5 +1,6 @@
 package party.stoat.patchwork.block.controller;
 
+import com.google.gson.Gson;
 import com.kneelawk.graphlib.api.util.NodePos;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -24,6 +25,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.ticks.ContainerSingleItem;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import party.stoat.patchwork.MyBlocks;
@@ -32,6 +34,7 @@ import party.stoat.patchwork.block.ControllerConfiguration;
 import party.stoat.patchwork.block.SFControllerMenu;
 import party.stoat.patchwork.graph.*;
 import party.stoat.patchwork.graphlib.SFControllerNode;
+import party.stoat.patchwork.network.SFControllerSyncClientboundPayload;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -94,9 +97,11 @@ public class SFControllerBlockEntity extends BlockEntity implements MenuProvider
         }
 
         if(!entity.spawnIn.isEmpty() && entity.watcher != null) {
-//            PacketDistributor.sendToPlayer(entity.watcher, new PatchControllerSyncClientboundPayload(
-//                    new Gson().toJson(entity.patches), entity.getBlockPos()
-//            ));
+            var descriptors = entity.config.getNodesFromNetworkResources(Patchwork.UNIVERSE.getGraphWorld(serverLevel).getGraphForNode(
+                    new NodePos(entity.worldPosition, SFControllerNode.INSTANCE)
+            ), serverLevel.getServer());
+
+            PacketDistributor.sendToPlayer(entity.watcher, new SFControllerSyncClientboundPayload(new Gson().toJson(entity.config.graphs), new Gson().toJson(descriptors), blockPos));
         }
         entity.spawnIn.clear();
     }

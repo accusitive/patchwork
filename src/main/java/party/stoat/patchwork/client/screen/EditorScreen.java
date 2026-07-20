@@ -218,7 +218,8 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
     }
 
     public void refresh(int width, int height) {
-        this.leftSidebar = this.createLeftSidebar();
+        this.leftSidebar = this.buildLeftSidebar();
+        this.rightSidebar = this.buildRightSidebar();
 
         if(this.canvas == null || this.rightSidebar == null) this.resize(width, height);
 
@@ -229,12 +230,7 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
         ));
     }
 
-    @Override
-    public void resize(int width, int height) {
-        super.resize(width, height);
-
-        state.graphNodes.scissor = false;
-
+    public Renderable buildRightSidebar() {
         var externalResources = new Dropdown("Resources", this.state.serverProvidedDescriptors.stream().map(
                 descriptor ->
                         (Renderable) new RenderableGraphNode(
@@ -247,18 +243,27 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
         var list = new VerticalList<>(List.of(new Text("Nodes", 0xffffffff), externalResources), 4, false, false);
         list.width = 200;
 
-        this.canvas = new ScissorNode(state.graphNodes, true);
-
-        this.canvas.width = minecraft.getWindow().getGuiScaledWidth() - externalResources.width - 200;
-        this.canvas.height = minecraft.getWindow().getGuiScaledHeight();
-        this.canvas.offsetX = 200;
-
         var scrollable = new Scrollable<>(list, externalResources.width, minecraft.getWindow().getGuiScaledHeight());
-
-        this.rightSidebar = new BackgroundColorNode<>(ARGB.color(200, 25, 25, 35), scrollable);
 
         scrollable.offsetX = minecraft.getWindow().getGuiScaledWidth() - list.width;
         scrollable.offsetY = 5;
+
+        return new BackgroundColorNode<>(ARGB.color(200, 25, 25, 35), scrollable);
+    }
+
+    @Override
+    public void resize(int width, int height) {
+        super.resize(width, height);
+
+        state.graphNodes.scissor = false;
+
+        this.canvas = new ScissorNode(state.graphNodes, true);
+
+        this.rightSidebar = this.buildRightSidebar();
+
+        this.canvas.width = minecraft.getWindow().getGuiScaledWidth() - 400;
+        this.canvas.height = minecraft.getWindow().getGuiScaledHeight();
+        this.canvas.offsetX = 200;
 
         saveButton.offsetX = 204;
         saveButton.offsetY = 4;
@@ -268,7 +273,7 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
         this.lastLayout = root.extractLayout(0, 0);
     }
 
-    private Renderable createLeftSidebar() {
+    private Renderable buildLeftSidebar() {
         List<Renderable> patchSelectButtons = new ArrayList<>();
         List<Renderable> otherButtons = new ArrayList<>();
 
