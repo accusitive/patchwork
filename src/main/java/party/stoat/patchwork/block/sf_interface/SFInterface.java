@@ -14,6 +14,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.DirectionalBlock;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
@@ -66,14 +67,26 @@ public class SFInterface extends DirectionalBlock implements SFNetworkConnectabl
 
     @Override
     protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return this.getOcclusionShape(state);
+    }
+
+    @Override
+    protected VoxelShape getVisualShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return this.getOcclusionShape(state);
+    }
+
+    @Override
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return this.getOcclusionShape(state);
+    }
+
+    @Override
+    protected VoxelShape getOcclusionShape(BlockState state) {
         VoxelShape shape = Shapes.join(
                 Shapes.join(
-                Shapes.create(2.0 / 16.0, 2.0 / 16.0, 2.0 / 16.0, 2 / 16.0, 14.0 / 16.0, 14.0 / 16.0),
-                Shapes.create(5.0 / 16.0, 2.0 / 16.0, 5.0 / 16.0, 11.0 / 16.0, 3.0 / 16.0, 11.0 / 16.0),
-                BooleanOp.OR
-        ),
-                Shapes.create(7.0 / 16.0, 3.0 / 16.0, 7.0 / 16.0, 9.0 / 16.0, 9.0 / 16.0, 9.0 / 16.0),
-                BooleanOp.OR
+                        Shapes.create(2.0 / 16.0, 2.0 / 16.0, 0.0 / 16.0, 14.0 / 16.0, 14.0 / 16.0, 2.0 / 16.0),
+                        Shapes.create(5.0 / 16.0, 5.0 / 16.0, 2.0 / 16.0, 11.0 / 16.0, 11.0 / 16.0, 3.0 / 16.0), BooleanOp.OR),
+                Shapes.create(7.0 / 16.0, 7.0 / 16.0, 3.0 / 16.0, 9.0 / 16.0, 9.0 / 16.0, 9.0 / 16.0), BooleanOp.OR
         );
 
         shape = Shapes.rotateAll(shape).get(state.getValue(FACING));
@@ -101,6 +114,13 @@ public class SFInterface extends DirectionalBlock implements SFNetworkConnectabl
         state = state.setValue(DOWN, level.getBlockState(pos.relative(Direction.DOWN)).getBlock() instanceof SFNetworkConnectable && state.getValue(FACING) != Direction.DOWN);
 
         return state;
+    }
+
+    @Override
+    protected RenderShape getRenderShape(BlockState state) {
+
+
+        return super.getRenderShape(state);
     }
 
     @Override

@@ -110,11 +110,6 @@ public class RenderableGraphNode extends Renderable {
     @Override
     public boolean onMouseDown(int x, int y, EditorScreen.EditorState state) {
         if(state.getCurrentGraph() == null) return false;
-
-        if(!this.preview) {
-            if(!state.selectedNodes.contains(this)) state.selectedNodes.add(this);
-            this.highlighted = true;
-        }
         
         if(this.preview) {
             var newNode = new RenderableGraphNode(this.descriptor, UUID.randomUUID(), false);
@@ -148,6 +143,19 @@ public class RenderableGraphNode extends Renderable {
         dragging = mouseDown;
 
         if (dragging) {
+            if(!state.selectedNodes.contains(this)) {
+                if(state.shiftPressed) {
+                    state.selectedNodes.add(this);
+                    this.highlighted = true;
+                } else {
+                    state.selectedNodes.forEach(node -> node.highlighted = false);
+                    state.selectedNodes.clear();
+                    state.selectedNodes.add(this);
+                    this.highlighted = true;
+
+                }
+            }
+
             state.selectedNodes.forEach(node -> {
                 node.offsetX += x - mX;
                 node.offsetY += y - mY;
@@ -160,13 +168,23 @@ public class RenderableGraphNode extends Renderable {
 
     @Override
     public boolean onMouseUp(int x, int y, EditorScreen.EditorState state) {
+        if(this.layoutCache.contains(x + this.layoutCache.x(), y + this.layoutCache.y()) && !this.preview) {
+            if(!dragging) {
+                if (!state.shiftPressed) {
+                    state.selectedNodes.forEach(node -> node.highlighted = false);
+                    state.selectedNodes.clear();
+
+                    state.selectedNodes.add(this);
+                    this.highlighted = true;
+                } else {
+                    if(!state.selectedNodes.contains(this)) state.selectedNodes.add(this);
+                    this.highlighted = true;
+                }
+            }
+        }
+
         mouseDown = false;
         dragging = false;
-
-        if (!state.shiftPressed) {
-            state.selectedNodes.forEach(node -> node.highlighted = node == this);
-            state.selectedNodes.removeIf(node -> node != this);
-        }
 
         return false;
     }

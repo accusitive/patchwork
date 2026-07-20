@@ -52,7 +52,7 @@ public class SFCable extends Block implements SFNetworkConnectable {
     }
 
     @Override
-    protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+    protected VoxelShape getOcclusionShape(BlockState state) {
         VoxelShape shape = Shapes.create(7.0 / 16.0, 7.0 / 16.0, 7.0 / 16.0, 9.0 / 16.0, 9.0 / 16.0, 9.0 / 16.0);
         VoxelShape part = Shapes.create(7.0 / 16.0, 7.0 / 16.0, 0.0, 9.0 / 16.0, 9.0 / 16.0, 7.0 / 16.0);
 
@@ -66,6 +66,21 @@ public class SFCable extends Block implements SFNetworkConnectable {
         if(state.getValue(DOWN)) shape = Shapes.join(shape, parts.get(Direction.DOWN), BooleanOp.OR);
 
         return shape;
+    }
+
+    @Override
+    protected VoxelShape getVisualShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return this.getOcclusionShape(state);
+    }
+
+    @Override
+    protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return this.getOcclusionShape(state);
+    }
+
+    @Override
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return this.getOcclusionShape(state);
     }
 
     @Override
