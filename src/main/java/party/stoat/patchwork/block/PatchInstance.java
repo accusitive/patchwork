@@ -42,10 +42,6 @@ public class PatchInstance {
     public void initialize(MinecraftServer server) {
         if(this.initialized) return;
 
-        for(var node : nodes.values()) {
-            node.init(server);
-        }
-
         this.initialized = true;
     }
 

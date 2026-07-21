@@ -6,6 +6,7 @@ import com.kneelawk.graphlib.api.graph.GraphUniverse;
 import com.kneelawk.graphlib.api.util.NodePos;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -13,6 +14,7 @@ import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
@@ -55,12 +57,15 @@ import party.stoat.patchwork.graph.PatchGraph;
 import party.stoat.patchwork.graphlib.SFCableNode;
 import party.stoat.patchwork.graphlib.SFControllerNode;
 import party.stoat.patchwork.graphlib.SFInterfaceNode;
+import party.stoat.patchwork.virtual.LevelVirtualBlockCache;
 import party.stoat.patchwork.network.*;
+import party.stoat.patchwork.virtual.PlayerVirtualTrackedChunk;
 import party.stoat.patchwork.virtual.VirtualManager;
 
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
 
@@ -156,6 +161,15 @@ public class Patchwork {
     private void registerPayloads(RegisterPayloadHandlersEvent event) {
         var registrar = event.registrar("1");
         registrar.playToClient(
+                CacheBlockStateClientboundPayload.TYPE,
+                CacheBlockStateClientboundPayload.CODEC,
+                (payload, context) -> {
+                    var cache = ((LevelVirtualBlockCache) context.player().level());
+
+                    cache.patchwork$cacheBlock(payload.pos(), payload.state(), payload.tag());
+                }
+        );
+        registrar.playToClient(
                 OpenPatchControllerScreenClientboundPayload.TYPE, OpenPatchControllerScreenClientboundPayload.CODEC, (payload, context) -> {
 
                 }
@@ -196,17 +210,35 @@ public class Patchwork {
         );
         registrar.playToServer(
                 OpenRemoteMachineServerboundPayload.TYPE, OpenRemoteMachineServerboundPayload.CODEC, (payload, context) -> {
-                    if(context.player().level().getBlockEntity(payload.pos()) instanceof SFControllerBlockEntity e) {
+                    if(context.player().level().getBlockEntity(payload.pos()) instanceof SFControllerBlockEntity e && context.player() instanceof ServerPlayer serverPlayer) {
+                        ServerLevel level = serverPlayer.level();
                         for(var patch : e.config.instances.values()) {
                             if(patch.nodes.containsKey(payload.node())) {
                                 var node = patch.nodes.get(payload.node());
 
                                 if(node instanceof VirtualizedBlockNode containerNode) {
-                                    var machineLevel = context.player().level().getServer().getLevel(MyBlocks.MACHINE_LEVEL);
                                     context.player().closeContainer();
 
-                                    var blockState = machineLevel.getBlockState(containerNode.proxyPos);
-                                    blockState.useWithoutItem(machineLevel, context.player(), new BlockHitResult(
+                                    var blockState = level.getBlockState(containerNode.proxyPos);
+                                    var chunk = level.getChunk(containerNode.proxyPos);
+
+                                    ((PlayerVirtualTrackedChunk) serverPlayer).patchwork$setChunk(chunk.getPos());
+
+                                    var blockEntity = level.getBlockEntity(containerNode.proxyPos);
+
+                                    Optional<CompoundTag> nbt = Optional.empty();
+
+                                    if(blockEntity != null) {
+                                        nbt = Optional.of(blockEntity.saveWithFullMetadata(context.player().level().registryAccess()));
+                                    }
+
+                                    PacketDistributor.sendToPlayer((ServerPlayer) context.player(), new CacheBlockStateClientboundPayload(
+                                            blockState,
+                                            nbt,
+                                            containerNode.proxyPos
+                                    ));
+
+                                    blockState.useWithoutItem(level, context.player(), new BlockHitResult(
                                             new Vec3(containerNode.proxyPos.getX(), containerNode.proxyPos.getY(), containerNode.proxyPos.getZ()),
                                             Direction.NORTH,
                                             containerNode.proxyPos,
@@ -233,7 +265,7 @@ public class Patchwork {
 
                         var descriptors = e.config.getNodesFromNetworkResources(Patchwork.UNIVERSE.getGraphWorld((ServerLevel) context.player().level()).getGraphForNode(
                                 new NodePos(payload.pos(), SFControllerNode.INSTANCE)
-                        ), context.player().level().getServer());
+                        ), (ServerLevel) context.player().level(), (ServerPlayer) context.player());
 
                         PacketDistributor.sendToPlayer((ServerPlayer) context.player(), new SFControllerSyncClientboundPayload(new Gson().toJson(e.config.graphs), new Gson().toJson(descriptors), payload.pos()));
                     }
@@ -249,7 +281,7 @@ public class Patchwork {
 
                         var descriptors = e.config.getNodesFromNetworkResources(Patchwork.UNIVERSE.getGraphWorld((ServerLevel) context.player().level()).getGraphForNode(
                                 new NodePos(payload.pos(), SFControllerNode.INSTANCE)
-                        ), context.player().level().getServer());
+                        ), (ServerLevel) context.player().level(), (ServerPlayer) context.player());
 
                         PacketDistributor.sendToPlayer((ServerPlayer) context.player(), new SFControllerSyncClientboundPayload(new Gson().toJson(e.config.graphs), new Gson().toJson(descriptors), payload.pos()));
                     }

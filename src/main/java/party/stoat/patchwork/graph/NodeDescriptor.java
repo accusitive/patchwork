@@ -41,6 +41,7 @@ public record NodeDescriptor(String title, List<IO> inputs, List<IO> outputs, in
         Inventory(ARGB.color(94, 3, 252)),
         Fluid(ARGB.color(187, 242, 250)),
         Energy(ARGB.color(91, 143, 66)),
+        Chemical(ARGB.color(175, 113, 76)),
         Any(ARGB.color(255, 255, 255));
 
         public final int color;

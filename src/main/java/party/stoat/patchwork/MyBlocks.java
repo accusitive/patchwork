@@ -19,7 +19,6 @@ import party.stoat.patchwork.block.sf_interface.SFInterface;
 import java.util.function.Supplier;
 
 public class MyBlocks {
-    public static final ResourceKey<Level> MACHINE_LEVEL = ResourceKey.create(Registries.DIMENSION, Identifier.fromNamespaceAndPath(Patchwork.MOD_ID, "machine_level"));
     // Creates a new Block with the id "patchwork:example_block", combining the namespace and path
 
     public static final DeferredBlock<Block> SF_CABLE = Patchwork.BLOCKS.registerBlock("sf_cable", SFCable::new, BlockBehaviour.Properties::dynamicShape);

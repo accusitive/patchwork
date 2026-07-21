@@ -2,6 +2,7 @@ package party.stoat.patchwork.virtual;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;
@@ -9,9 +10,14 @@ import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
 import party.stoat.patchwork.Patchwork;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+
 public class MachineLevelSavedData extends SavedData {
 
     private int count;
+    public HashSet<BlockPos> virtualized;
 
     public static final SavedDataType<MachineLevelSavedData> ID = new SavedDataType<>(
             // The identifier of the saved data
@@ -21,16 +27,19 @@ public class MachineLevelSavedData extends SavedData {
             MachineLevelSavedData::new,
             // The codec used to serialize the data
             RecordCodecBuilder.create(instance -> instance.group(
-                    Codec.INT.fieldOf("count").forGetter(sd -> sd.count)
+                    Codec.INT.fieldOf("count").forGetter(sd -> sd.count),
+                    Codec.list(BlockPos.CODEC).fieldOf("virtualized").forGetter(sd -> sd.virtualized.stream().toList())
             ).apply(instance, MachineLevelSavedData::new))
     );
 
 
     public MachineLevelSavedData() {
+        this.virtualized = new HashSet<>();
     }
 
-    public MachineLevelSavedData(int count) {
+    public MachineLevelSavedData(int count, List<BlockPos> virtualized) {
         this.count = count;
+        this.virtualized = new HashSet<>(virtualized);
     }
 
     public int increment() {

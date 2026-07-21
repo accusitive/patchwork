@@ -19,13 +19,14 @@ public class VirtualManager {
             var data = level.getDataStorage().computeIfAbsent(MachineLevelSavedData.ID);
 
             int count = data.increment();
-            int x = (count % 16) * 160;
+            int x = -(level.getWorldBorder().getAbsoluteMaxSize() + 16);
             int y = 0;
-            int z = (count / 16) * 160;
+            int z = -(level.getWorldBorder().getAbsoluteMaxSize() + 16) + (count * 160);
 
             level.setChunkForced(x / 16, z / 16, true);
 
             var pos = new BlockPos(x, y, z);
+            data.virtualized.add(pos);
 
             level.setBlockAndUpdate(pos, blockItem.getBlock().defaultBlockState());
 

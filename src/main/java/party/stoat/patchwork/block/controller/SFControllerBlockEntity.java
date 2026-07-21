@@ -66,13 +66,12 @@ public class SFControllerBlockEntity extends BlockEntity implements MenuProvider
             serverLevel = s;
         } else return;
 
-        var machineLevel = level.getServer().getLevel(MyBlocks.MACHINE_LEVEL);
-
         for(var instance : entity.config.instances.values()) {
             for(var node : instance.nodes.values()) {
                 if(node instanceof VirtualizedBlockNode virtual) {
                     if(!entity.loaded.contains(virtual.proxyPos)) {
-                        machineLevel.setChunkForced(virtual.proxyPos.getX() / 16, virtual.proxyPos.getZ() / 16, true);
+                        serverLevel.setChunkForced(virtual.proxyPos.getX() / 16, virtual.proxyPos.getZ() / 16, true);
+                        entity.loaded.add(virtual.proxyPos);
                     }
                 }
             }
@@ -119,7 +118,7 @@ public class SFControllerBlockEntity extends BlockEntity implements MenuProvider
             for(ItemStack stack : entity.spawnIn) {
                 var id = UUID.randomUUID();
 
-                var pos = Patchwork.VIRTUAL_MANAGER.allocate(machineLevel, id, stack);
+                var pos = Patchwork.VIRTUAL_MANAGER.allocate(serverLevel, id, stack);
 
                 entity.config.virtualized.add(pos);
             }
@@ -130,7 +129,7 @@ public class SFControllerBlockEntity extends BlockEntity implements MenuProvider
 //        }
 
 //        if(machineLevel != null && entity.storage.amount >= cost) {
-        if(machineLevel != null && entity.config != null) {
+        if(entity.config != null) {
             var nodeGraph = Patchwork.UNIVERSE.getGraphWorld(serverLevel).getGraphForNode(new NodePos(blockPos, SFControllerNode.INSTANCE));
 //            entity.storage.amount -= cost;
 
@@ -159,7 +158,7 @@ public class SFControllerBlockEntity extends BlockEntity implements MenuProvider
         if(!entity.spawnIn.isEmpty() && entity.watcher != null) {
             var descriptors = entity.config.getNodesFromNetworkResources(Patchwork.UNIVERSE.getGraphWorld(serverLevel).getGraphForNode(
                     thisNode
-            ), serverLevel.getServer());
+            ), serverLevel, entity.watcher);
 
             PacketDistributor.sendToPlayer(entity.watcher, new SFControllerSyncClientboundPayload(new Gson().toJson(entity.config.graphs), new Gson().toJson(descriptors), blockPos));
         }

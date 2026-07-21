@@ -1,12 +1,15 @@
 package party.stoat.patchwork.graph;
 
 import com.kneelawk.graphlib.api.graph.BlockGraph;
+import mekanism.api.chemical.ChemicalResource;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.capabilities.BlockCapability;
 import net.neoforged.neoforge.transfer.ResourceHandler;
 import net.neoforged.neoforge.transfer.energy.EnergyHandler;
+import net.neoforged.neoforge.transfer.fluid.FluidResource;
 import net.neoforged.neoforge.transfer.item.ItemResource;
 import net.neoforged.neoforge.transfer.transaction.TransactionContext;
 import org.jspecify.annotations.Nullable;
@@ -35,9 +38,13 @@ public abstract class Node {
         return this.uuid;
     }
 
-    public abstract @Nullable ResourceHandler<ItemResource> getItemHandler(MinecraftServer server, NodeDescriptor.IO port);
+    public abstract @Nullable ResourceHandler<ChemicalResource> getChemicalHandler(ServerLevel level, NodeDescriptor.IO port);
 
-    public abstract @Nullable EnergyHandler getEnergyHandler(MinecraftServer server, NodeDescriptor.IO port);
+    public abstract @Nullable ResourceHandler<ItemResource> getItemHandler(ServerLevel level, NodeDescriptor.IO port);
+
+    public abstract @Nullable ResourceHandler<FluidResource> getFluidHandler(ServerLevel level, NodeDescriptor.IO port);
+
+    public abstract @Nullable EnergyHandler getEnergyHandler(ServerLevel level, NodeDescriptor.IO port);
 
     public abstract void tick(ControllerConfiguration config, PatchInstance patch, ServerLevel level, BlockGraph network, TransactionContext context, SFControllerBlockEntity controller);
 
@@ -48,7 +55,5 @@ public abstract class Node {
     public abstract Identifier getIdentifier();
 
     public abstract void acceptConfiguration(String string);
-
-    public void init(MinecraftServer level) { }
 
 }

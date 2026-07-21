@@ -1,6 +1,7 @@
 package party.stoat.patchwork.graph;
 
 import com.kneelawk.graphlib.api.graph.BlockGraph;
+import mekanism.api.chemical.ChemicalResource;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -8,6 +9,7 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.transfer.ResourceHandler;
 import net.neoforged.neoforge.transfer.energy.EnergyHandler;
+import net.neoforged.neoforge.transfer.fluid.FluidResource;
 import net.neoforged.neoforge.transfer.item.ItemResource;
 import net.neoforged.neoforge.transfer.transaction.Transaction;
 import net.neoforged.neoforge.transfer.transaction.TransactionContext;
@@ -28,12 +30,22 @@ public class SFSystemPowerNode extends Node {
     }
 
     @Override
-    public @Nullable ResourceHandler<ItemResource> getItemHandler(MinecraftServer server, NodeDescriptor.IO port) {
+    public @Nullable ResourceHandler<ChemicalResource> getChemicalHandler(ServerLevel level, NodeDescriptor.IO port) {
         return null;
     }
 
     @Override
-    public @Nullable EnergyHandler getEnergyHandler(MinecraftServer server, NodeDescriptor.IO port) {
+    public @Nullable ResourceHandler<ItemResource> getItemHandler(ServerLevel level, NodeDescriptor.IO port) {
+        return null;
+    }
+
+    @Override
+    public @Nullable ResourceHandler<FluidResource> getFluidHandler(ServerLevel level, NodeDescriptor.IO port) {
+        return null;
+    }
+
+    @Override
+    public @Nullable EnergyHandler getEnergyHandler(ServerLevel level, NodeDescriptor.IO port) {
         return null;
     }
 
@@ -49,7 +61,7 @@ public class SFSystemPowerNode extends Node {
 
             var storage = controller.storage;
 
-            var foreignStorage = connectedNode.getEnergyHandler(level.getServer(), foreignPort);
+            var foreignStorage = connectedNode.getEnergyHandler(level, foreignPort);
 
             if(foreignStorage == null) continue;
 
@@ -57,7 +69,7 @@ public class SFSystemPowerNode extends Node {
 
                 int toInsert = 0;
 
-                inner: try(Transaction initial = Transaction.open(inner)) {
+                try(Transaction initial = Transaction.open(inner)) {
                     var extracted = storage.extract(foreignStorage.getCapacityAsInt(), initial);
                     var inserted = foreignStorage.insert(extracted, initial);
 

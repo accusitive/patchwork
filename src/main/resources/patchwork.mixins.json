@@ -3,7 +3,13 @@
   "package": "party.stoat.patchwork.mixin",
   "compatibilityLevel": "JAVA_25",
   "mixins": [
-    "ContainerInMachineLevelYupThatsValidYup"
+    "AddCachedBlockToClientLevel",
+    "ChunkMapTrackPlayerWatchingRemoteMachine",
+    "ContainerInMachineLevelYupThatsValidYup",
+    "LevelChunkTickMustTickVirtualized",
+    "ServerPlayerVirtualChunkTracker",
+    "ShrinkWorlderBorder",
+    "UpdateClientWhenVirtualizedServerBlockStateChanges"
   ],
   "injectors": {
     "defaultRequire": 1

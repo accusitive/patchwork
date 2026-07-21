@@ -34,29 +34,20 @@ public class ExternalStorageNode extends VirtualizedBlockNode {
     }
 
     @Override
-    protected ServerLevel getLevel(MinecraftServer server) {
-        for(ServerLevel level : server.getAllLevels()) {
-            if(level.dimension().registry().equals(this.config.level.registry()) && level.dimension().identifier().equals(this.config.level.identifier())) return level;
-        }
-
-        return null;
-    }
-
-    @Override
     public void tick(ControllerConfiguration config, PatchInstance patchInstance, ServerLevel level, BlockGraph network, TransactionContext context, SFControllerBlockEntity controller) {
         if(network.getNodeAt(new NodePos(this.config.interfacePos, SFInterfaceNode.INSTANCE)) != null) super.tick(config, patchInstance, level, network, context, controller);
     }
 
     @Override
-    public @Nullable ResourceHandler<ItemResource> getItemHandler(MinecraftServer server, NodeDescriptor.IO port) {
-        if(Patchwork.UNIVERSE.getGraphWorld(this.getLevel(server)).getNodeAt(new NodePos(this.config.interfacePos, SFInterfaceNode.INSTANCE)) != null) return super.getItemHandler(server, port);
+    public @Nullable ResourceHandler<ItemResource> getItemHandler(ServerLevel level, NodeDescriptor.IO port) {
+        if(Patchwork.UNIVERSE.getGraphWorld(level).getNodeAt(new NodePos(this.config.interfacePos, SFInterfaceNode.INSTANCE)) != null) return super.getItemHandler(level, port);
 
         return null;
     }
 
     @Override
-    public @Nullable EnergyHandler getEnergyHandler(MinecraftServer server, NodeDescriptor.IO port) {
-        if(Patchwork.UNIVERSE.getGraphWorld(this.getLevel(server)).getNodeAt(new NodePos(this.config.interfacePos, SFInterfaceNode.INSTANCE)) != null) return super.getEnergyHandler(server, port);
+    public @Nullable EnergyHandler getEnergyHandler(ServerLevel level, NodeDescriptor.IO port) {
+        if(Patchwork.UNIVERSE.getGraphWorld(level).getNodeAt(new NodePos(this.config.interfacePos, SFInterfaceNode.INSTANCE)) != null) return super.getEnergyHandler(level, port);
 
         return null;
     }

@@ -3,15 +3,19 @@ package party.stoat.patchwork.graph;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.kneelawk.graphlib.api.graph.BlockGraph;
+import mekanism.api.chemical.ChemicalResource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.transfer.ResourceHandler;
 import net.neoforged.neoforge.transfer.energy.EnergyHandler;
+import net.neoforged.neoforge.transfer.fluid.FluidResource;
 import net.neoforged.neoforge.transfer.item.ItemResource;
 import net.neoforged.neoforge.transfer.transaction.Transaction;
 import net.neoforged.neoforge.transfer.transaction.TransactionContext;
@@ -35,17 +39,29 @@ public class VirtualizedBlockNode extends Node {
     }
 
     @Override
-    public @Nullable ResourceHandler<ItemResource> getItemHandler(MinecraftServer server, NodeDescriptor.IO port) {
+    public @Nullable ResourceHandler<ChemicalResource> getChemicalHandler(ServerLevel level, NodeDescriptor.IO port) {
         if(this.proxyPos == null) return null;
-        var level = this.getLevel(server);
+        if(level == null) return null;
+        return level.getCapability(mekanism.common.capabilities.Capabilities.CHEMICAL.block(), this.proxyPos, port.direction());
+    }
+
+    @Override
+    public @Nullable ResourceHandler<ItemResource> getItemHandler(ServerLevel level, NodeDescriptor.IO port) {
+        if(this.proxyPos == null) return null;
         if(level == null) return null;
         return level.getCapability(Capabilities.Item.BLOCK, this.proxyPos, port.direction());
     }
 
     @Override
-    public @Nullable EnergyHandler getEnergyHandler(MinecraftServer server, NodeDescriptor.IO port) {
+    public @Nullable ResourceHandler<FluidResource> getFluidHandler(ServerLevel level, NodeDescriptor.IO port) {
         if(this.proxyPos == null) return null;
-        var level = this.getLevel(server);
+        if(level == null) return null;
+        return level.getCapability(Capabilities.Fluid.BLOCK, this.proxyPos, port.direction());
+    }
+
+    @Override
+    public @Nullable EnergyHandler getEnergyHandler(ServerLevel level, NodeDescriptor.IO port) {
+        if(this.proxyPos == null) return null;
         if(level == null) return null;
         return level.getCapability(Capabilities.Energy.BLOCK, this.proxyPos, port.direction());
     }
@@ -64,8 +80,50 @@ public class VirtualizedBlockNode extends Node {
             var foreignPort = connectedNode.getDescriptor().getPort(connection.keyTo());
 
             switch(port.d().d()) {
+                case Chemical -> {
+                    var storage = level.getCapability(mekanism.common.capabilities.Capabilities.CHEMICAL.block(), this.proxyPos, port.direction());
+                    var foreignStorage = connectedNode.getChemicalHandler(level, foreignPort);
+
+                    if(foreignStorage == null) continue;
+
+                    if(storage != null) try(Transaction transaction = Transaction.open(context)) {
+
+                        for(int localIndex=0;localIndex<storage.size();localIndex++) {
+                            var resource = storage.getResource(localIndex);
+                            if(resource.isEmpty()) continue;
+
+                            for(int foreignIndex=0;foreignIndex<foreignStorage.size();foreignIndex++) {
+                                succeedAll: try(Transaction inner = Transaction.open(transaction)) {
+
+                                    int toInsert = 0;
+
+                                    try(Transaction initial = Transaction.open(inner)) {
+                                        var extracted = storage.extract(resource, storage.getCapacityAsInt(foreignIndex, resource), initial);
+                                        var inserted = foreignStorage.insert(resource, extracted, initial);
+
+                                        if(inserted < extracted) {
+                                            toInsert = inserted;
+                                        } else if(inserted == extracted) {
+                                            initial.commit();
+                                            inner.commit();
+                                            break succeedAll;
+                                        }
+                                    }
+
+                                    var extracted = storage.extract(foreignIndex, resource, toInsert, inner);
+                                    var inserted = foreignStorage.insert(resource, toInsert, inner);
+
+                                    if(inserted == extracted) inner.commit();
+                                }
+                            }
+
+                        }
+
+                        transaction.commit();
+                    }
+                }
                 case Item -> {
-                    var storage = this.getLevel(level.getServer()).getCapability(Capabilities.Item.BLOCK, this.proxyPos, port.direction());
+                    var storage = level.getCapability(Capabilities.Item.BLOCK, this.proxyPos, port.direction());
 
                     if(storage != null) try(Transaction transaction = Transaction.open(context)) {
 
@@ -75,7 +133,7 @@ public class VirtualizedBlockNode extends Node {
                                 if(resource.isEmpty()) continue;
 
                                 var extracted = storage.extract(resource, 1, inner);
-                                var foreignStorage = connectedNode.getItemHandler(level.getServer(), foreignPort);
+                                var foreignStorage = connectedNode.getItemHandler(level, foreignPort);
                                 var inserted = foreignStorage.insert(resource, extracted, inner);
                                 if(inserted == extracted) inner.commit();
                             }
@@ -87,17 +145,46 @@ public class VirtualizedBlockNode extends Node {
                 case Inventory -> {
                 }
                 case Fluid -> {
+                    var storage = level.getCapability(Capabilities.Fluid.BLOCK, this.proxyPos, port.direction());
+                    var foreignStorage = connectedNode.getFluidHandler(level, foreignPort);
+
+                    if(foreignStorage == null) continue;
+
+                    if(storage != null) try(Transaction transaction = Transaction.open(context)) {
+
+                        for(int i=0;i<storage.size();i++) {
+                            try(Transaction inner = Transaction.open(transaction)) {
+                                var resource = storage.getResource(i);
+                                if(resource.isEmpty()) continue;
+
+                                var extracted = storage.extract(resource, 1000, inner);
+                                var inserted = foreignStorage.insert(resource, extracted, inner);
+                                if(inserted == extracted) inner.commit();
+                            }
+                        }
+
+                        transaction.commit();
+                    }
                 }
                 case Energy -> {
+//                    var storage = level.getCapability(Capabilities.Energy.BLOCK, this.proxyPos, port.direction());
+//
+//                    if(storage != null) try(Transaction transaction = Transaction.open(context)) {
+//
+//                        try(Transaction inner = Transaction.open(transaction)) {
+//                            var extracted = storage.extract( 1, inner);
+//                            var foreignStorage = connectedNode.getItemHandler(level, foreignPort);
+//                            var inserted = foreignStorage.insert(resource, extracted, inner);
+//                            if(inserted == extracted) inner.commit();
+//                        }
+//
+//                        transaction.commit();
+//                    }
                 }
                 case Any -> {
                 }
             }
         }
-    }
-
-    protected ServerLevel getLevel(MinecraftServer server) {
-        return server.getLevel(MyBlocks.MACHINE_LEVEL);
     }
 
     @Override
