@@ -25,6 +25,7 @@ import party.stoat.patchwork.client.Bezier4;
 import party.stoat.patchwork.client.screen.components.*;
 import party.stoat.patchwork.graph.NodeDescriptor;
 import party.stoat.patchwork.graph.PatchGraph;
+import party.stoat.patchwork.graph.SFSystemPowerNode;
 import party.stoat.patchwork.network.CreatePatchServerboundPayload;
 import party.stoat.patchwork.network.UpdatePatchServerboundPayload;
 
@@ -176,11 +177,11 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
         if(event.key() == GLFW.GLFW_KEY_DELETE) {
             for(var node : state.selectedNodes) {
                 if(state.getCurrentGraph() == null) break;
-                this.state.graphNodes.elements.removeIf(renderable -> renderable == node);
-                state.getCurrentGraph().nodeDescriptors.remove(node.uuid);
                 state.getCurrentGraph().connections.removeIf(
-                        conn -> conn.from() == node.uuid || conn.to() == node.uuid
+                        conn -> conn.from().equals(node.uuid) || conn.to().equals(node.uuid)
                 );
+                this.state.graphNodes.elements.removeIf(renderable -> renderable.equals(node));
+                state.getCurrentGraph().nodeDescriptors.remove(node.uuid);
             }
             state.selectedNodes.clear();
         }
@@ -240,7 +241,24 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
                         )
         ).toList());
 
-        var list = new VerticalList<>(List.of(new Text("Nodes", 0xffffffff), externalResources), 4, false, false);
+        var builtin = new Dropdown("System", List.of(
+                new RenderableGraphNode(
+                        new NodeDescriptor(
+                                "System Power",
+                                List.of(),
+                                List.of(
+                                        new NodeDescriptor.IO("Power out", "out", new NodeDescriptor.Data(NodeDescriptor.DataType.Energy, false), null)
+                                ),
+                                NodeDescriptor.DataType.Energy.color,
+                                SFSystemPowerNode.IDENTIFIER,
+                                ""
+                        ),
+                        UUID.randomUUID(),
+                        true
+                )
+        ));
+
+        var list = new VerticalList<>(List.of(new Text("Nodes", 0xffffffff), externalResources, builtin), 4, false, false);
         list.width = 200;
 
         var scrollable = new Scrollable<>(list, externalResources.width, minecraft.getWindow().getGuiScaledHeight());
@@ -351,6 +369,8 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
         if(state.getCurrentGraph() != null) for(var conn : state.getCurrentGraph().connections) {
             var fromNode = state.graphNodeToRenderableMap.get(conn.from());
             var toNode = state.graphNodeToRenderableMap.get(conn.to());
+
+            if(fromNode == null || toNode == null) continue;
 
             var fromPort = fromNode.ports.get(conn.keyFrom()).port;
             var toPort = toNode.ports.get(conn.keyTo()).port;

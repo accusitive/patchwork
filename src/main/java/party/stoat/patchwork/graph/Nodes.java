@@ -18,6 +18,7 @@ public class Nodes {
 
         register("sf_interface", ExternalStorageNode::new);
         register("virtual", VirtualizedBlockNode::new);
+        register("patch_nodes/system_power", SFSystemPowerNode::new);
 
     }
 

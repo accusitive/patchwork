@@ -1,9 +1,13 @@
 package party.stoat.patchwork.block;
 
+import com.google.gson.Gson;
+import com.kneelawk.graphlib.api.graph.BlockGraph;
+import com.kneelawk.graphlib.api.graph.NodeHolder;
 import com.kneelawk.graphlib.api.graph.user.BlockNode;
 import com.kneelawk.graphlib.api.util.NodePos;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
@@ -17,17 +21,23 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.redstone.Orientation;import net.minecraft.world.phys.BlockHitResult;
+import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.transfer.energy.SimpleEnergyHandler;
+import net.neoforged.neoforge.transfer.transaction.TransactionContext;
 import org.jspecify.annotations.NonNull;import org.jspecify.annotations.Nullable;
 import party.stoat.patchwork.Patchwork;
 import party.stoat.patchwork.block.controller.SFControllerBlockEntity;
 import party.stoat.patchwork.graphlib.SFCableNode;
 import party.stoat.patchwork.graphlib.SFControllerNode;
+import party.stoat.patchwork.network.SFControllerSyncClientboundPayload;
 
 import java.util.List;
 
-public class SFTerminal extends DirectionalBlock implements SFNetworkConnectable {
+public class SFTerminal extends DirectionalBlock implements SFNetworkConnectable, SFEnergyHandler {
 
     public static final BooleanProperty POWERED = BooleanProperty.create("powered");
+
+    public SimpleEnergyHandler storage = new SimpleEnergyHandler(5, 5, 0);
 
     public SFTerminal(Properties properties) {
         super(properties);
@@ -47,7 +57,7 @@ public class SFTerminal extends DirectionalBlock implements SFNetworkConnectable
 
     @Override
     public @Nullable BlockState getStateForPlacement(BlockPlaceContext context) {
-        return defaultBlockState().setValue(POWERED, false).setValue(FACING, context.getClickedFace().getOpposite());
+        return defaultBlockState().setValue(POWERED, false).setValue(FACING, context.getHorizontalDirection().getOpposite());
     }
 
     @Override
@@ -76,10 +86,21 @@ public class SFTerminal extends DirectionalBlock implements SFNetworkConnectable
 
     @Override
     protected @NonNull InteractionResult useWithoutItem(@NonNull BlockState state, @NonNull Level level, @NonNull BlockPos pos, @NonNull Player player, @NonNull BlockHitResult hitResult) {
-        if (!level.isClientSide() && level.getBlockEntity(pos) instanceof SFControllerBlockEntity e) {
-            player.openMenu(e);
-            e.watcher = (ServerPlayer) player;
-//            PacketDistributor.sendToPlayer((ServerPlayer) player, new PatchControllerSyncClientboundPayload(new Gson().toJson(e.patches), pos));
+        if (level instanceof ServerLevel serverLevel) {
+            BlockGraph graph = Patchwork.UNIVERSE.getGraphWorld(serverLevel).getGraphForNode(new NodePos(pos, SFCableNode.INSTANCE));
+
+            if(graph != null) for(var node : graph.getNodes().toList()) {
+                if(node.getBlockEntity() instanceof SFControllerBlockEntity e) {
+                    player.openMenu(e);
+                    e.watcher = (ServerPlayer) player;
+                    var descriptors = e.config.getNodesFromNetworkResources(Patchwork.UNIVERSE.getGraphWorld(serverLevel).getGraphForNode(
+                            node.getPos()
+                    ), level.getServer());
+                    PacketDistributor.sendToPlayer((ServerPlayer) player, new SFControllerSyncClientboundPayload(new Gson().toJson(e.config.graphs), new Gson().toJson(descriptors), node.getBlockPos()));
+                    break;
+                }
+            }
+
         }
 
         return InteractionResult.SUCCESS;
@@ -87,7 +108,39 @@ public class SFTerminal extends DirectionalBlock implements SFNetworkConnectable
 
     @Override
     public List<BlockNode> createNodes() {
-        return List.of(SFControllerNode.INSTANCE);
+        return List.of(SFCableNode.INSTANCE);
     }
 
+    @Override
+    public int desiredAmount() {
+        return this.storage.getAmountAsLong() < this.storage.getCapacityAsLong() ? 1 : 0;
+    }
+
+    @Override
+    public void checkPowered(NodeHolder<BlockNode> node) {
+        BlockState state = node.getBlockState().setValue(POWERED, this.storage.getAmountAsLong() > 0);
+        if(node.getBlockState() != state) {
+            node.getBlockWorld().setBlockAndUpdate(node.getBlockPos(), state);
+        }
+    }
+
+    @Override
+    public long getAmountAsLong() {
+        return this.storage.getAmountAsLong();
+    }
+
+    @Override
+    public long getCapacityAsLong() {
+        return this.storage.getCapacityAsLong();
+    }
+
+    @Override
+    public int insert(int amount, TransactionContext transaction) {
+        return this.storage.insert(amount, transaction);
+    }
+
+    @Override
+    public int extract(int amount, TransactionContext transaction) {
+        return this.storage.extract(amount, transaction);
+    }
 }

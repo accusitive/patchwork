@@ -3,8 +3,8 @@
 	"credit": "Made with Blockbench",
 	"parent": "patchwork:block/sf_controller",
 	"textures": {
-		"0": "patchwork:block/sf_terminal_powered",
-		"particle": "patchwork:block/sf_terminal"
+		"0": "patchwork:block/sf_terminal",
+		"particle": "patchwork:block/sf_terminal_powered"
 	},
 	"elements": [
 		{

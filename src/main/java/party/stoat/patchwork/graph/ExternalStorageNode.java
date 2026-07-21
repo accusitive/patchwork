@@ -10,10 +10,15 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.energy.EnergyHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
 import net.neoforged.neoforge.transfer.transaction.TransactionContext;
+import org.jspecify.annotations.Nullable;
 import party.stoat.patchwork.Patchwork;
 import party.stoat.patchwork.block.ControllerConfiguration;
 import party.stoat.patchwork.block.PatchInstance;
+import party.stoat.patchwork.block.controller.SFControllerBlockEntity;
 import party.stoat.patchwork.graphlib.SFInterfaceNode;
 
 import java.util.UUID;
@@ -38,15 +43,22 @@ public class ExternalStorageNode extends VirtualizedBlockNode {
     }
 
     @Override
-    public void tick(ControllerConfiguration config, PatchInstance patchInstance, ServerLevel level, BlockGraph network) {
-        if(network.getNodeAt(new NodePos(this.config.interfacePos, SFInterfaceNode.INSTANCE)) != null) super.tick(config, patchInstance, level, network);
+    public void tick(ControllerConfiguration config, PatchInstance patchInstance, ServerLevel level, BlockGraph network, TransactionContext context, SFControllerBlockEntity controller) {
+        if(network.getNodeAt(new NodePos(this.config.interfacePos, SFInterfaceNode.INSTANCE)) != null) super.tick(config, patchInstance, level, network, context, controller);
     }
 
     @Override
-    public boolean receiveItemStack(NodeDescriptor.IO port, ItemStack stack, TransactionContext transaction, MinecraftServer server) {
-        if(Patchwork.UNIVERSE.getGraphWorld(this.getLevel(server)).getNodeAt(new NodePos(this.config.interfacePos, SFInterfaceNode.INSTANCE)) != null) return super.receiveItemStack(port, stack, transaction, server);
+    public @Nullable ResourceHandler<ItemResource> getItemHandler(MinecraftServer server, NodeDescriptor.IO port) {
+        if(Patchwork.UNIVERSE.getGraphWorld(this.getLevel(server)).getNodeAt(new NodePos(this.config.interfacePos, SFInterfaceNode.INSTANCE)) != null) return super.getItemHandler(server, port);
 
-        return false;
+        return null;
+    }
+
+    @Override
+    public @Nullable EnergyHandler getEnergyHandler(MinecraftServer server, NodeDescriptor.IO port) {
+        if(Patchwork.UNIVERSE.getGraphWorld(this.getLevel(server)).getNodeAt(new NodePos(this.config.interfacePos, SFInterfaceNode.INSTANCE)) != null) return super.getEnergyHandler(server, port);
+
+        return null;
     }
 
     @Override

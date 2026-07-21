@@ -89,7 +89,8 @@ public class ControllerConfiguration {
                                         new NodeDescriptor.IO("South", "southin", new NodeDescriptor.Data(NodeDescriptor.DataType.Item, false), Direction.SOUTH),
                                         new NodeDescriptor.IO("West", "westin", new NodeDescriptor.Data(NodeDescriptor.DataType.Item, false), Direction.WEST),
                                         new NodeDescriptor.IO("Up", "upin", new NodeDescriptor.Data(NodeDescriptor.DataType.Item, false), Direction.UP),
-                                        new NodeDescriptor.IO("Down", "downin", new NodeDescriptor.Data(NodeDescriptor.DataType.Item, false), Direction.DOWN)
+                                        new NodeDescriptor.IO("Down", "downin", new NodeDescriptor.Data(NodeDescriptor.DataType.Item, false), Direction.DOWN),
+                                        new NodeDescriptor.IO("Power", "powerin", new NodeDescriptor.Data(NodeDescriptor.DataType.Energy, false), Direction.UP)
                                 ),
                                 List.of(
                                         new NodeDescriptor.IO("North", "northout", new NodeDescriptor.Data(NodeDescriptor.DataType.Item, false), Direction.NORTH),
@@ -119,10 +120,21 @@ public class ControllerConfiguration {
                         new NodeDescriptor(
                                 "Interface (" + proxiedName + ")",
                                 List.of(
-                                        new NodeDescriptor.IO("north", "northin", new NodeDescriptor.Data(NodeDescriptor.DataType.Item, false), Direction.NORTH)
+                                        new NodeDescriptor.IO("North", "northin", new NodeDescriptor.Data(NodeDescriptor.DataType.Item, false), Direction.NORTH),
+                                        new NodeDescriptor.IO("East", "eastin", new NodeDescriptor.Data(NodeDescriptor.DataType.Item, false), Direction.EAST),
+                                        new NodeDescriptor.IO("South", "southin", new NodeDescriptor.Data(NodeDescriptor.DataType.Item, false), Direction.SOUTH),
+                                        new NodeDescriptor.IO("West", "westin", new NodeDescriptor.Data(NodeDescriptor.DataType.Item, false), Direction.WEST),
+                                        new NodeDescriptor.IO("Up", "upin", new NodeDescriptor.Data(NodeDescriptor.DataType.Item, false), Direction.UP),
+                                        new NodeDescriptor.IO("Down", "downin", new NodeDescriptor.Data(NodeDescriptor.DataType.Item, false), Direction.DOWN),
+                                        new NodeDescriptor.IO("Power", "powerin", new NodeDescriptor.Data(NodeDescriptor.DataType.Energy, false), Direction.UP)
                                 ),
                                 List.of(
-                                        new NodeDescriptor.IO("north", "northout", new NodeDescriptor.Data(NodeDescriptor.DataType.Item, false), Direction.NORTH)
+                                        new NodeDescriptor.IO("North", "northout", new NodeDescriptor.Data(NodeDescriptor.DataType.Item, false), Direction.NORTH),
+                                        new NodeDescriptor.IO("East", "eastout", new NodeDescriptor.Data(NodeDescriptor.DataType.Item, false), Direction.EAST),
+                                        new NodeDescriptor.IO("South", "southout", new NodeDescriptor.Data(NodeDescriptor.DataType.Item, false), Direction.SOUTH),
+                                        new NodeDescriptor.IO("West", "westout", new NodeDescriptor.Data(NodeDescriptor.DataType.Item, false), Direction.WEST),
+                                        new NodeDescriptor.IO("Up", "upout", new NodeDescriptor.Data(NodeDescriptor.DataType.Item, false), Direction.UP),
+                                        new NodeDescriptor.IO("Down", "downout", new NodeDescriptor.Data(NodeDescriptor.DataType.Item, false), Direction.DOWN)
                                 ),
                                 0xff000000,
                                 Identifier.fromNamespaceAndPath("patchwork", "sf_interface"),

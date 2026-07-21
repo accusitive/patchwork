@@ -1,10 +1,34 @@
 {
   "variants": {
-    "powered=false": {
+    "powered=false,facing=north": {
       "model": "patchwork:block/sf_terminal"
     },
-    "powered=true": {
-      "model": "patchwork:block/sf_terminal"
+    "powered=false,facing=east": {
+      "model": "patchwork:block/sf_terminal",
+      "y": 90
+    },
+    "powered=false,facing=south": {
+      "model": "patchwork:block/sf_terminal",
+      "y": 180
+    },
+    "powered=false,facing=west": {
+      "model": "patchwork:block/sf_terminal",
+      "y": 270
+    },
+    "powered=true,facing=north": {
+      "model": "patchwork:block/sf_terminal_powered"
+    },
+    "powered=true,facing=east": {
+      "model": "patchwork:block/sf_terminal_powered",
+      "y": 90
+    },
+    "powered=true,facing=south": {
+      "model": "patchwork:block/sf_terminal_powered",
+      "y": 180
+    },
+    "powered=true,facing=west": {
+      "model": "patchwork:block/sf_terminal_powered",
+      "y": 270
     }
   }
 }

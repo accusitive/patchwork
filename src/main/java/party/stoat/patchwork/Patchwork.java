@@ -11,15 +11,19 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.fml.event.lifecycle.FMLDedicatedServerSetupEvent;
 import net.neoforged.neoforge.capabilities.BlockCapability;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.transfer.energy.EnergyHandler;
 import org.slf4j.Logger;
 
@@ -80,30 +84,26 @@ public class Patchwork {
         );
 
     public static final BlockCapability<EnergyHandler, Void> SF_CONTROLLER_ENERGY_CAPABILITY =
-            BlockCapability.create(
-                    // Provide a name to uniquely identify the capability.
-                    Identifier.fromNamespaceAndPath(Patchwork.MOD_ID, "sf_controller"),
-                    // Provide the queried type. Here, we want to look up `ResourceHandler<ItemResource>` instances.
-                    EnergyHandler.class,
-                    // Provide the context type. We will allow the query to receive an extra `Direction side` parameter.
-                    Void.class
-            );
+            BlockCapability.createVoid(Identifier.fromNamespaceAndPath(MOD_ID, "energy_handler"), EnergyHandler.class);
 
     public static final GraphUniverse UNIVERSE = GraphUniverse.builder().build(Identifier.fromNamespaceAndPath(MOD_ID, "graph_universe"));
 
     public static final VirtualManager VIRTUAL_MANAGER = new VirtualManager();
 
     // Creates a new food item with the id "patchwork:example_id", nutrition 1 and saturation 2
-//    public static final DeferredItem<Item> EXAMPLE_ITEM = ITEMS.registerSimpleItem("example_item", p -> p.food(new FoodProperties.Builder()
-//            .alwaysEdible().nutrition(1).saturationModifier(2f).build()));
+    public static final DeferredItem<Item> SUPERCONDUCTING_INGOT = ITEMS.registerSimpleItem("superconducting_ingot", p -> p);
 
     // Creates a creative tab with the id "patchwork:example_tab" for the example item, that is placed after the combat tab
-    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> EXAMPLE_TAB = CREATIVE_MODE_TABS.register("example_tab", () -> CreativeModeTab.builder()
+    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> PATCHWORK_TAB = CREATIVE_MODE_TABS.register("patchwork", () -> CreativeModeTab.builder()
             .title(Component.translatable("itemGroup.patchwork")) //The language key for the title of your CreativeModeTab
             .withTabsBefore(CreativeModeTabs.COMBAT)
             .icon(() -> MyBlocks.SF_CONTROLLER_ITEM.get().getDefaultInstance())
             .displayItems((parameters, output) -> {
                 output.accept(MyBlocks.SF_CONTROLLER_ITEM.get()); // Add the example item to the tab. For your own tabs, this method is preferred over the event
+                output.accept(MyBlocks.SF_CABLE_ITEM.get());
+                output.accept(MyBlocks.SF_TERMINAL_ITEM.get());
+                output.accept(MyBlocks.SF_INTERFACE_ITEM.get());
+                output.accept(SUPERCONDUCTING_INGOT.get());
             }).build());
 
     // The constructor for the mod class is the first code that is run when your mod is loaded.
@@ -126,6 +126,7 @@ public class Patchwork {
         modEventBus.addListener(this::serverSetup);
         modEventBus.addListener(this::registerScreens);
         modEventBus.addListener(this::registerPayloads);
+        modEventBus.addListener(this::registerCapabilities);
 
         MENU_REGISTER.register(modEventBus);
         BLOCK_ENTITY_TYPES.register(modEventBus);
@@ -196,18 +197,24 @@ public class Patchwork {
         registrar.playToServer(
                 OpenRemoteMachineServerboundPayload.TYPE, OpenRemoteMachineServerboundPayload.CODEC, (payload, context) -> {
                     if(context.player().level().getBlockEntity(payload.pos()) instanceof SFControllerBlockEntity e) {
-                        var node = e.config.instances.get(payload.patch()).nodes.get(payload.node());
-                        if(node != null && node instanceof VirtualizedBlockNode containerNode) {
-                            var machineLevel = context.player().level().getServer().getLevel(MyBlocks.MACHINE_LEVEL);
-                            context.player().closeContainer();
+                        for(var patch : e.config.instances.values()) {
+                            if(patch.nodes.containsKey(payload.node())) {
+                                var node = patch.nodes.get(payload.node());
 
-                            var blockState = machineLevel.getBlockState(containerNode.proxyPos);
-                            blockState.useWithoutItem(machineLevel, context.player(), new BlockHitResult(
-                                    new Vec3(containerNode.proxyPos.getX(), containerNode.proxyPos.getY(), containerNode.proxyPos.getZ()),
-                                    Direction.NORTH,
-                                    containerNode.proxyPos,
-                                    false
-                            ));
+                                if(node instanceof VirtualizedBlockNode containerNode) {
+                                    var machineLevel = context.player().level().getServer().getLevel(MyBlocks.MACHINE_LEVEL);
+                                    context.player().closeContainer();
+
+                                    var blockState = machineLevel.getBlockState(containerNode.proxyPos);
+                                    blockState.useWithoutItem(machineLevel, context.player(), new BlockHitResult(
+                                            new Vec3(containerNode.proxyPos.getX(), containerNode.proxyPos.getY(), containerNode.proxyPos.getZ()),
+                                            Direction.NORTH,
+                                            containerNode.proxyPos,
+                                            false
+                                    ));
+                                }
+                                break;
+                            }
                         }
                     }
                 }
@@ -247,6 +254,14 @@ public class Patchwork {
                         PacketDistributor.sendToPlayer((ServerPlayer) context.player(), new SFControllerSyncClientboundPayload(new Gson().toJson(e.config.graphs), new Gson().toJson(descriptors), payload.pos()));
                     }
                 }
+        );
+    }
+
+    private void registerCapabilities(RegisterCapabilitiesEvent event) {
+        event.registerBlockEntity(
+                Capabilities.Energy.BLOCK,
+                MyBlocks.SF_CONTROLLER_BLOCK_ENTITY.get(),
+                (entity, side) -> entity.storage
         );
     }
 

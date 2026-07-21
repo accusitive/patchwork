@@ -1,7 +1,5 @@
 {
-  "itemGroup.patchwork": "Example Mod Tab",
-  "block.patchwork.example_block": "Example Block",
-  "item.patchwork.example_item": "Example Item",
+  "itemGroup.patchwork": "Patchwork",
 
   "block.patchwork.sf_controller": "SF Controller",
   "block.patchwork.sf_cable": "SF Cable",

@@ -1,6 +1,7 @@
 package party.stoat.patchwork.virtual;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -13,20 +14,21 @@ import java.util.UUID;
 
 public class VirtualManager {
 
-    public HashMap<UUID, BlockPos> proxies = new HashMap<>();
-
-    public BlockPos allocate(Level level, UUID uuid, ItemStack stack) {
+    public BlockPos allocate(ServerLevel level, UUID uuid, ItemStack stack) {
         if(stack.getItem() instanceof BlockItem blockItem) {
-            int count = proxies.size();
-            int x = (count % 16) * 4;
+            var data = level.getDataStorage().computeIfAbsent(MachineLevelSavedData.ID);
+
+            int count = data.increment();
+            int x = (count % 16) * 160;
             int y = 0;
-            int z = (count / 16) * 4;
+            int z = (count / 16) * 160;
+
+            level.setChunkForced(x / 16, z / 16, true);
 
             var pos = new BlockPos(x, y, z);
 
             level.setBlockAndUpdate(pos, blockItem.getBlock().defaultBlockState());
 
-            this.proxies.put(uuid, pos);
             return pos;
         } else return null;
     }

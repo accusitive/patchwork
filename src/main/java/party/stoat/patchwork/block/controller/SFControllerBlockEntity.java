@@ -1,6 +1,7 @@
 package party.stoat.patchwork.block.controller;
 
 import com.google.gson.Gson;
+import com.kneelawk.graphlib.api.graph.BlockGraph;
 import com.kneelawk.graphlib.api.util.NodePos;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -26,17 +27,23 @@ import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.ticks.ContainerSingleItem;
 import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.transfer.energy.EnergyHandler;
+import net.neoforged.neoforge.transfer.energy.SimpleEnergyHandler;
+import net.neoforged.neoforge.transfer.transaction.Transaction;
+import net.neoforged.neoforge.transfer.transaction.TransactionContext;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import party.stoat.patchwork.MyBlocks;
 import party.stoat.patchwork.Patchwork;
 import party.stoat.patchwork.block.ControllerConfiguration;
 import party.stoat.patchwork.block.SFControllerMenu;
+import party.stoat.patchwork.block.SFEnergyHandler;
 import party.stoat.patchwork.graph.*;
 import party.stoat.patchwork.graphlib.SFControllerNode;
 import party.stoat.patchwork.network.SFControllerSyncClientboundPayload;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 
@@ -47,7 +54,9 @@ public class SFControllerBlockEntity extends BlockEntity implements MenuProvider
 
     public ControllerConfiguration config = new ControllerConfiguration();
 
-//    public SimpleEnergyStorage storage = new SimpleEnergyStorage(1000L, 1000L, 0L);
+    public SimpleEnergyHandler storage = new SimpleEnergyHandler(1000000, 1000000, 1000000);
+
+    public HashSet<BlockPos> loaded = new HashSet<>();
 
     public ServerPlayer watcher;
 
@@ -57,21 +66,54 @@ public class SFControllerBlockEntity extends BlockEntity implements MenuProvider
             serverLevel = s;
         } else return;
 
-        entity.config.initializeIfNeeded(serverLevel.getServer());
-
         var machineLevel = level.getServer().getLevel(MyBlocks.MACHINE_LEVEL);
 
-//        entity.storage.amount = Math.max(0, entity.storage.amount);
+        for(var instance : entity.config.instances.values()) {
+            for(var node : instance.nodes.values()) {
+                if(node instanceof VirtualizedBlockNode virtual) {
+                    if(!entity.loaded.contains(virtual.proxyPos)) {
+                        machineLevel.setChunkForced(virtual.proxyPos.getX() / 16, virtual.proxyPos.getZ() / 16, true);
+                    }
+                }
+            }
+        }
 
-//        if(entity.storage.getAmount() > 0) {
-//            if(!blockState.getValue(SFController.POWERED)) {
-//                level.setBlockAndUpdate(blockPos, blockState.setValue(SFController.POWERED, true));
-//            }
-//        } else {
-//            if(blockState.getValue(SFController.POWERED)) {
-//                level.setBlockAndUpdate(blockPos, blockState.setValue(SFController.POWERED, false));
-//            }
-//        }
+        entity.config.initializeIfNeeded(serverLevel.getServer());
+
+        var thisNode = new NodePos(entity.worldPosition, SFControllerNode.INSTANCE);
+
+        BlockGraph sfNetworkGraph = Patchwork.UNIVERSE.getGraphWorld(serverLevel).getGraphForNode(thisNode);
+
+        if(sfNetworkGraph != null) outer: try(Transaction transaction = Transaction.openRoot()) {
+            for(var sfNode : sfNetworkGraph.getNodes().toList()) {
+                if(sfNode.getBlockState().getBlock() instanceof SFEnergyHandler energyHandler) {
+                    var desired = energyHandler.desiredAmount();
+                    var extractedAmount = entity.storage.extract(desired, transaction);
+
+                    if(extractedAmount < desired) break outer;
+
+                    energyHandler.insert(extractedAmount, transaction);
+                }
+            }
+
+            transaction.commit();
+        }
+
+        if(sfNetworkGraph != null) for(var sfNode : sfNetworkGraph.getNodes().toList()) {
+            if(sfNode.getBlockState().getBlock() instanceof SFEnergyHandler energyHandler) {
+                energyHandler.checkPowered(sfNode);
+            }
+        }
+
+        if(entity.storage.getAmountAsLong() > 0) {
+            if(!blockState.getValue(SFController.POWERED)) {
+                level.setBlockAndUpdate(blockPos, blockState.setValue(SFController.POWERED, true));
+            }
+        } else {
+            if (blockState.getValue(SFController.POWERED)) {
+                level.setBlockAndUpdate(blockPos, blockState.setValue(SFController.POWERED, false));
+            }
+        }
 
         if(!entity.spawnIn.isEmpty()) {
             for(ItemStack stack : entity.spawnIn) {
@@ -91,14 +133,32 @@ public class SFControllerBlockEntity extends BlockEntity implements MenuProvider
         if(machineLevel != null && entity.config != null) {
             var nodeGraph = Patchwork.UNIVERSE.getGraphWorld(serverLevel).getGraphForNode(new NodePos(blockPos, SFControllerNode.INSTANCE));
 //            entity.storage.amount -= cost;
-            for(var patchInstance : entity.config.instances.values()) {
-                for(var node : patchInstance.nodes.values()) node.tick(entity.config, patchInstance, serverLevel, nodeGraph);
+
+
+            outer: try(Transaction transaction = Transaction.openRoot()) {
+                for(var patchInstance : entity.config.instances.values()) {
+                    for(var node : patchInstance.nodes.values()) {
+                        try(Transaction inner = Transaction.open(transaction)) {
+                            node.tick(entity.config, patchInstance, serverLevel, nodeGraph, inner, entity);
+                            var amount = entity.storage.getAmountAsInt() - 10;
+                            entity.storage.set(Math.max(amount, 0));
+//                            var amount = 1;
+
+                            if(amount >= 0) inner.commit();
+                            else {
+                                break outer;
+                            }
+                        }
+                    }
+                }
+
+                transaction.commit();
             }
         }
 
         if(!entity.spawnIn.isEmpty() && entity.watcher != null) {
             var descriptors = entity.config.getNodesFromNetworkResources(Patchwork.UNIVERSE.getGraphWorld(serverLevel).getGraphForNode(
-                    new NodePos(entity.worldPosition, SFControllerNode.INSTANCE)
+                    thisNode
             ), serverLevel.getServer());
 
             PacketDistributor.sendToPlayer(entity.watcher, new SFControllerSyncClientboundPayload(new Gson().toJson(entity.config.graphs), new Gson().toJson(descriptors), blockPos));

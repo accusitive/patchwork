@@ -49,7 +49,7 @@ public class RenderableGraphNode extends Renderable {
         children.add(header);
 
         this.openRemote = new ImageButton(EditorScreen.MAGNIFYING_GLASS_TEXTURE, 16, 16, (btn, state) -> {
-            ClientPacketDistributor.sendToServer(new OpenRemoteMachineServerboundPayload(uuid, state.getCurrentGraph().graphId, state.controllerPos));
+            ClientPacketDistributor.sendToServer(new OpenRemoteMachineServerboundPayload(uuid, state.controllerPos));
         });
 
         this.openRemote.paddingX = 3;

@@ -34,7 +34,7 @@ import party.stoat.patchwork.network.SFControllerSyncClientboundPayload;
 
 import java.util.List;
 
-public class SFController extends BaseEntityBlock implements SFNetworkConnectable, EnergyHandler {
+public class SFController extends BaseEntityBlock implements SFNetworkConnectable {
 
     public static final BooleanProperty POWERED = BooleanProperty.create("powered");
     public static final BooleanProperty ERROR = BooleanProperty.create("error");
@@ -87,20 +87,6 @@ public class SFController extends BaseEntityBlock implements SFNetworkConnectabl
     }
 
     @Override
-    protected @NonNull InteractionResult useWithoutItem(@NonNull BlockState state, @NonNull Level level, @NonNull BlockPos pos, @NonNull Player player, @NonNull BlockHitResult hitResult) {
-        if (level instanceof ServerLevel serverLevel && level.getBlockEntity(pos) instanceof SFControllerBlockEntity e) {
-            player.openMenu(e);
-            e.watcher = (ServerPlayer) player;
-            var descriptors = e.config.getNodesFromNetworkResources(Patchwork.UNIVERSE.getGraphWorld(serverLevel).getGraphForNode(
-                    new NodePos(pos, SFControllerNode.INSTANCE)
-            ), level.getServer());
-            PacketDistributor.sendToPlayer((ServerPlayer) player, new SFControllerSyncClientboundPayload(new Gson().toJson(e.config.graphs), new Gson().toJson(descriptors), pos));
-        }
-
-        return InteractionResult.SUCCESS;
-    }
-
-    @Override
     public @Nullable <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState blockState, BlockEntityType<T> type) {
         return createTickerHelper(type, MyBlocks.SF_CONTROLLER_BLOCK_ENTITY.get(), SFControllerBlockEntity::tick);
     }
@@ -115,23 +101,4 @@ public class SFController extends BaseEntityBlock implements SFNetworkConnectabl
         return List.of(SFControllerNode.INSTANCE);
     }
 
-    @Override
-    public long getAmountAsLong() {
-        return 0;
-    }
-
-    @Override
-    public long getCapacityAsLong() {
-        return 0;
-    }
-
-    @Override
-    public int insert(int amount, TransactionContext transaction) {
-        return 0;
-    }
-
-    @Override
-    public int extract(int amount, TransactionContext transaction) {
-        return 0;
-    }
 }

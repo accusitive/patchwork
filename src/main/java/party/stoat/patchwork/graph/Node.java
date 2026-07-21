@@ -5,9 +5,14 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.energy.EnergyHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
 import net.neoforged.neoforge.transfer.transaction.TransactionContext;
+import org.jspecify.annotations.Nullable;
 import party.stoat.patchwork.block.ControllerConfiguration;
 import party.stoat.patchwork.block.PatchInstance;
+import party.stoat.patchwork.block.controller.SFControllerBlockEntity;
 
 import java.util.List;
 import java.util.UUID;
@@ -30,9 +35,11 @@ public abstract class Node {
         return this.uuid;
     }
 
-    public abstract boolean receiveItemStack(NodeDescriptor.IO port, ItemStack stack, TransactionContext transaction, MinecraftServer server);
+    public abstract @Nullable ResourceHandler<ItemResource> getItemHandler(MinecraftServer server, NodeDescriptor.IO port);
 
-    public abstract void tick(ControllerConfiguration config, PatchInstance patch, ServerLevel level, BlockGraph network);
+    public abstract @Nullable EnergyHandler getEnergyHandler(MinecraftServer server, NodeDescriptor.IO port);
+
+    public abstract void tick(ControllerConfiguration config, PatchInstance patch, ServerLevel level, BlockGraph network, TransactionContext context, SFControllerBlockEntity controller);
 
     public NodeDescriptor getDescriptor() {
         return this.descriptor;
