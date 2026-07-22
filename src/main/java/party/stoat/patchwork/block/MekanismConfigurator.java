@@ -17,7 +17,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.level.storage.TagValueOutput;
 import net.minecraft.world.level.storage.ValueInput;
-import party.stoat.patchwork.graph.NodeDescriptor;
+import party.stoat.patchwork.patchgraph.NodeDescriptor;
+import party.stoat.patchwork.patchgraph.StorageConfiguration;
 
 import java.util.HashMap;
 import java.util.function.Function;

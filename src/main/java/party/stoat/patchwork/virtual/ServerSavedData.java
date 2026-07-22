@@ -1,8 +1,5 @@
 package party.stoat.patchwork.virtual;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.UUIDUtil;
@@ -10,7 +7,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
 import party.stoat.patchwork.Patchwork;
-import party.stoat.patchwork.block.StorageConfiguration;
+import party.stoat.patchwork.patchgraph.StorageConfiguration;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -1,9 +1,15 @@
 {
   "variants": {
-    "powered=false": {
+    "powered=false,error=true": {
       "model": "patchwork:block/sf_controller"
     },
-    "powered=true": {
+    "powered=true,error=true": {
+      "model": "patchwork:block/sf_controller_error"
+    },
+    "powered=false,error=false": {
+      "model": "patchwork:block/sf_controller"
+    },
+    "powered=true,error=false": {
       "model": "patchwork:block/sf_controller_powered"
     }
   }

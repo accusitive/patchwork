@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "A": "minecraft:deepslate",
+    "B": "patchwork:superconducting_ingot",
+    "C": "minecraft:diamond",
+    "D": "minecraft:redstone"
+  },
+  "pattern": [
+    "AAA",
+    "CBD",
+    "AAA"
+  ],
+  "result": {
+    "count": 1,
+    "id": "patchwork:mediation_core"
+  }
+}

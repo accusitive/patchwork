@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "A": "minecraft:deepslate",
+    "B": "#minecraft:shulker_boxes",
+    "C": "minecraft:heart_of_the_sea",
+    "D": "patchwork:negotiation_core",
+    "E": "patchwork:mediation_core"
+  },
+  "pattern": [
+    "DBE",
+    "BCB",
+    "ABA"
+  ],
+  "result": {
+    "count": 1,
+    "id": "patchwork:storage_housing"
+  }
+}

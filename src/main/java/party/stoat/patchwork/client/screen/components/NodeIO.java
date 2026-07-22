@@ -1,7 +1,7 @@
 package party.stoat.patchwork.client.screen.components;
 
 import party.stoat.patchwork.client.screen.EditorScreen;
-import party.stoat.patchwork.graph.NodeDescriptor;
+import party.stoat.patchwork.patchgraph.NodeDescriptor;
 
 import java.util.List;
 import java.util.UUID;

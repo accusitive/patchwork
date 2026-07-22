@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "patchwork:item/storage_cell",
+    "layer1": "patchwork:item/tier2"
+  }
+}

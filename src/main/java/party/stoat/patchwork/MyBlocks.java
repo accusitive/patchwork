@@ -1,21 +1,17 @@
 package party.stoat.patchwork;
 
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredItem;
-import party.stoat.patchwork.block.SFCable;
-import party.stoat.patchwork.block.SFDrive;
-import party.stoat.patchwork.block.SFDriveBlockEntity;
+import party.stoat.patchwork.block.sf_cable.SFCable;
+import party.stoat.patchwork.block.sf_drive.SFDrive;
+import party.stoat.patchwork.block.sf_drive.SFDriveBlockEntity;
 import party.stoat.patchwork.block.SFTerminal;
-import party.stoat.patchwork.block.controller.SFController;
-import party.stoat.patchwork.block.controller.SFControllerBlockEntity;
+import party.stoat.patchwork.block.sf_controller.SFController;
+import party.stoat.patchwork.block.sf_controller.SFControllerBlockEntity;
 import party.stoat.patchwork.block.sf_interface.SFInterface;
 
 import java.util.function.Supplier;

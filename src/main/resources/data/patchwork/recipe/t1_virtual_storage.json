@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "patchwork:storage_housing",
+    "patchwork:t1_storage_cell"
+  ],
+  "result": {
+    "count": 1,
+    "id": "patchwork:t1_virtual_storage"
+  }
+}

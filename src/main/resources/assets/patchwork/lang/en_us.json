@@ -7,9 +7,16 @@
   "block.patchwork.sf_terminal": "SF Terminal",
   "block.patchwork.sf_drive": "SF Drive",
   "item.patchwork.superconducting_ingot": "Superconducting Ingot",
+  "item.patchwork.superconducting_dust": "Superconducting Dust",
   "item.patchwork.mediation_core": "Mediation Core",
   "item.patchwork.negotiation_core": "Negotiation Core",
+  "item.patchwork.storage_housing":  "Virtual Storage Housing",
   "item.patchwork.t1_virtual_storage":  "T1 Virtual Storage",
+  "item.patchwork.t1_storage_cell":  "T1 Storage Cell",
+  "item.patchwork.t2_virtual_storage":  "T2 Virtual Storage",
+  "item.patchwork.t2_storage_cell":  "T2 Storage Cell",
+  "item.patchwork.t3_virtual_storage":  "T3 Virtual Storage",
+  "item.patchwork.t3_storage_cell":  "T3 Storage Cell",
 
   "creativeTab.patchwork": "Patchwork",
 

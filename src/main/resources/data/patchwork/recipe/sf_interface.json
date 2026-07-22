@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "A": "patchwork:negotiation_core",
+    "B": "patchwork:mediation_core",
+    "C": "minecraft:redstone_lamp",
+    "D": "minecraft:chest",
+    "E": "minecraft:gold_block",
+    "F": "minecraft:glass"
+  },
+  "pattern": [
+    "ACB",
+    "EDE",
+    "FFF"
+  ],
+  "result": {
+    "count": 1,
+    "id": "patchwork:sf_interface"
+  }
+}

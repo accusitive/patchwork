@@ -1,13 +1,11 @@
 package party.stoat.patchwork.block;
 
-import com.google.gson.Gson;
 import com.kneelawk.graphlib.api.graph.BlockGraph;
 import com.kneelawk.graphlib.api.graph.NodeHolder;
 import com.kneelawk.graphlib.api.graph.user.BlockNode;
 import com.kneelawk.graphlib.api.util.NodePos;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
@@ -21,15 +19,14 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.redstone.Orientation;import net.minecraft.world.phys.BlockHitResult;
-import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.transfer.energy.SimpleEnergyHandler;
 import net.neoforged.neoforge.transfer.transaction.TransactionContext;
 import org.jspecify.annotations.NonNull;import org.jspecify.annotations.Nullable;
 import party.stoat.patchwork.Patchwork;
-import party.stoat.patchwork.block.controller.SFControllerBlockEntity;
-import party.stoat.patchwork.graphlib.SFCableNode;
+import party.stoat.patchwork.block.sf_controller.SFControllerBlockEntity;
 import party.stoat.patchwork.graphlib.SFControllerNode;
-import party.stoat.patchwork.network.SFControllerSyncClientboundPayload;
+import party.stoat.patchwork.patchgraph.StorageConfiguration;
+import party.stoat.patchwork.graphlib.SFCableNode;
 
 import java.util.List;
 
@@ -88,6 +85,8 @@ public class SFTerminal extends DirectionalBlock implements SFNetworkConnectable
     protected @NonNull InteractionResult useWithoutItem(@NonNull BlockState state, @NonNull Level level, @NonNull BlockPos pos, @NonNull Player player, @NonNull BlockHitResult hitResult) {
         if (level instanceof ServerLevel serverLevel) {
             BlockGraph graph = Patchwork.UNIVERSE.getGraphWorld(serverLevel).getGraphForNode(new NodePos(pos, SFCableNode.INSTANCE));
+
+            if(graph != null) if(graph.getNodes().filter(c -> c.getNode() == SFControllerNode.INSTANCE).count() > 1) return InteractionResult.FAIL;
 
             if(graph != null) for(var node : graph.getNodes().toList()) {
                 if(node.getBlockEntity() instanceof SFControllerBlockEntity e) {

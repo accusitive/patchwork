@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "A": "patchwork:superconducting_ingot",
+    "B": "#minecraft:shulker_boxes",
+    "C": "minecraft:nether_star",
+    "D": "minecraft:glass"
+  },
+  "pattern": [
+    "ADA",
+    "BCB",
+    "ABA"
+  ],
+  "result": {
+    "count": 1,
+    "id": "patchwork:t1_storage_cell"
+  }
+}

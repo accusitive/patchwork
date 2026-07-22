@@ -2,8 +2,8 @@ package party.stoat.patchwork.client.screen.components;
 
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import party.stoat.patchwork.client.screen.EditorScreen;
-import party.stoat.patchwork.graph.PatchGraph;
-import party.stoat.patchwork.graph.NodeDescriptor;
+import party.stoat.patchwork.patchgraph.PatchGraph;
+import party.stoat.patchwork.patchgraph.NodeDescriptor;
 
 import java.util.List;
 import java.util.UUID;

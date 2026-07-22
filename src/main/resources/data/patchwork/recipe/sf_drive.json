@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "A": "patchwork:negotiation_core",
+    "B": "patchwork:mediation_core",
+    "C": "minecraft:barrel",
+    "D": "#minecraft:shulker_boxes",
+    "E": "patchwork:superconducting_ingot",
+    "F": "minecraft:deepslate"
+  },
+  "pattern": [
+    "ACB",
+    "EDE",
+    "FFF"
+  ],
+  "result": {
+    "count": 1,
+    "id": "patchwork:sf_drive"
+  }
+}

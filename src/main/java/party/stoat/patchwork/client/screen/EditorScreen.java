@@ -20,13 +20,13 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 import party.stoat.patchwork.Patchwork;
-import party.stoat.patchwork.block.StorageConfiguration;
-import party.stoat.patchwork.block.SFControllerMenu;
+import party.stoat.patchwork.patchgraph.StorageConfiguration;
+import party.stoat.patchwork.block.sf_controller.SFControllerMenu;
 import party.stoat.patchwork.client.Bezier4;
 import party.stoat.patchwork.client.screen.components.*;
-import party.stoat.patchwork.graph.NodeDescriptor;
-import party.stoat.patchwork.graph.PatchGraph;
-import party.stoat.patchwork.graph.SFSystemPowerNode;
+import party.stoat.patchwork.patchgraph.NodeDescriptor;
+import party.stoat.patchwork.patchgraph.PatchGraph;
+import party.stoat.patchwork.patchgraph.nodes.SFSystemPowerNode;
 import party.stoat.patchwork.network.CreatePatchServerboundPayload;
 import party.stoat.patchwork.network.UpdatePatchServerboundPayload;
 

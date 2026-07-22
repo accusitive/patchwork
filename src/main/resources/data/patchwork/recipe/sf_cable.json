@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "A": "#minecraft:wool",
+    "B": "patchwork:mediation_core",
+    "C": "minecraft:redstone"
+  },
+  "pattern": [
+    "AAA",
+    "CCB",
+    "AAA"
+  ],
+  "result": {
+    "count": 4,
+    "id": "patchwork:sf_cable"
+  }
+}

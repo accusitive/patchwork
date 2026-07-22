@@ -8,7 +8,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec2;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import party.stoat.patchwork.client.screen.EditorScreen;
-import party.stoat.patchwork.graph.NodeDescriptor;
+import party.stoat.patchwork.patchgraph.NodeDescriptor;
 import party.stoat.patchwork.network.OpenRemoteMachineServerboundPayload;
 
 import java.util.ArrayList;

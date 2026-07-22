@@ -7,6 +7,7 @@ import com.kneelawk.graphlib.api.util.NodePos;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
@@ -47,10 +48,13 @@ import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import party.stoat.patchwork.block.*;
-import party.stoat.patchwork.block.controller.SFControllerBlockEntity;
+import party.stoat.patchwork.block.sf_controller.SFControllerBlockEntity;
+import party.stoat.patchwork.block.sf_controller.SFControllerMenu;
 import party.stoat.patchwork.client.screen.EditorScreen;
-import party.stoat.patchwork.graph.VirtualizedBlockNode;
-import party.stoat.patchwork.graph.PatchGraph;
+import party.stoat.patchwork.patchgraph.PatchInstance;
+import party.stoat.patchwork.patchgraph.StorageConfiguration;
+import party.stoat.patchwork.patchgraph.nodes.VirtualizedBlockNode;
+import party.stoat.patchwork.patchgraph.PatchGraph;
 import party.stoat.patchwork.graphlib.SFCableNode;
 import party.stoat.patchwork.graphlib.SFControllerNode;
 import party.stoat.patchwork.graphlib.SFDriveNode;
@@ -96,10 +100,20 @@ public class Patchwork {
 
     // Creates a new food item with the id "patchwork:example_id", nutrition 1 and saturation 2
     public static final DeferredItem<Item> SUPERCONDUCTING_INGOT = ITEMS.registerSimpleItem("superconducting_ingot", p -> p);
+    public static final DeferredItem<Item> SUPERCONDUCTING_DUST = ITEMS.registerSimpleItem("superconducting_dust", p -> p);
+
     public static final DeferredItem<Item> MEDIATION_CORE = ITEMS.registerSimpleItem("mediation_core", p -> p);
     public static final DeferredItem<Item> NEGOTIATION_CORE = ITEMS.registerSimpleItem("negotiation_core", p -> p);
 
-    public static final DeferredItem<Item> T1_VIRTUAL_STORAGE = ITEMS.registerSimpleItem("t1_virtual_storage", p -> p);
+    public static final DeferredItem<Item> T1_VIRTUAL_STORAGE = ITEMS.registerSimpleItem("t1_virtual_storage", p -> p.stacksTo(1));
+    public static final DeferredItem<Item> T2_VIRTUAL_STORAGE = ITEMS.registerSimpleItem("t2_virtual_storage", p -> p.stacksTo(1));
+    public static final DeferredItem<Item> T3_VIRTUAL_STORAGE = ITEMS.registerSimpleItem("t3_virtual_storage", p -> p.stacksTo(1).component(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true));
+
+    public static final DeferredItem<Item> T1_STORAGE_CELL = ITEMS.registerSimpleItem("t1_storage_cell", p -> p);
+    public static final DeferredItem<Item> T2_STORAGE_CELL = ITEMS.registerSimpleItem("t2_storage_cell", p -> p);
+    public static final DeferredItem<Item> T3_STORAGE_CELL = ITEMS.registerSimpleItem("t3_storage_cell", p -> p);
+
+    public static final DeferredItem<Item> STORAGE_HOUSING = ITEMS.registerSimpleItem("storage_housing", p -> p);
 
     // Creates a creative tab with the id "patchwork:example_tab" for the example item, that is placed after the combat tab
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> PATCHWORK_TAB = CREATIVE_MODE_TABS.register("patchwork", () -> CreativeModeTab.builder()
@@ -112,9 +126,16 @@ public class Patchwork {
                 output.accept(MyBlocks.SF_TERMINAL_ITEM.get());
                 output.accept(MyBlocks.SF_INTERFACE_ITEM.get());
                 output.accept(SUPERCONDUCTING_INGOT.get());
+                output.accept(SUPERCONDUCTING_DUST.get());
                 output.accept(NEGOTIATION_CORE.get());
                 output.accept(MEDIATION_CORE.get());
                 output.accept(T1_VIRTUAL_STORAGE);
+                output.accept(T2_VIRTUAL_STORAGE);
+                output.accept(T3_VIRTUAL_STORAGE);
+                output.accept(T1_STORAGE_CELL);
+                output.accept(T2_STORAGE_CELL);
+                output.accept(T3_STORAGE_CELL);
+                output.accept(STORAGE_HOUSING);
                 output.accept(MyBlocks.SF_DRIVE_ITEM);
             }).build());
 
