@@ -58,13 +58,14 @@ public class RenderableGraphNode extends Renderable {
         var inputs = new VerticalList<NodeIO>(new ArrayList<>(), 4, false, false);
         var outputs = new VerticalList<>(new ArrayList<>(), 4, true, false);
 
-        inputs.width = 40;
-        outputs.width = 40;
+        inputs.width = d.inputs().stream().mapToInt(input -> EditorScreen.FONT.width(input.name())).max().orElse(0);
+        outputs.width = d.outputs().stream().mapToInt(output -> EditorScreen.FONT.width(output.name())).max().orElse(0);
 
         inputs.offsetY = HEADER_HEIGHT + 10;
         outputs.offsetY = HEADER_HEIGHT + 10;
 
-        outputs.offsetX = Math.max(EditorScreen.FONT.width(d.title()), 130);
+        outputs.offsetX = Math.max(EditorScreen.FONT.width(d.title()), inputs.width + outputs.width) + 5;
+        outputs.offsetX = Math.max(outputs.offsetX, 80);
 
         for (var i : d.inputs()) {
             var io = new NodeIO(i.name(), i.key(), u, false, this.preview, i.d().d());

@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "patchwork:block/sf_drive"
+    },
+    "facing=east": {
+      "model": "patchwork:block/sf_drive",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "patchwork:block/sf_drive",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "patchwork:block/sf_drive",
+      "y": 270
+    }
+  }
+}

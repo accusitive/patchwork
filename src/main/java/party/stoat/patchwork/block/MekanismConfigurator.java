@@ -22,7 +22,7 @@ import party.stoat.patchwork.graph.NodeDescriptor;
 import java.util.HashMap;
 import java.util.function.Function;
 
-public class MekanismConfigurator implements ControllerConfiguration.BlockConfigurator {
+public class MekanismConfigurator implements StorageConfiguration.BlockConfigurator {
 
     private HashMap<Integer, TypeConfig> configs = new HashMap<>();
     private Function<Function<String, String>, NodeDescriptor> descriptorSupplier;

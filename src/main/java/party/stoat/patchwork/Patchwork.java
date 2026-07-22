@@ -6,6 +6,7 @@ import com.kneelawk.graphlib.api.graph.GraphUniverse;
 import com.kneelawk.graphlib.api.util.NodePos;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponentType;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
@@ -14,7 +15,6 @@ import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
@@ -46,20 +46,19 @@ import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
-import party.stoat.patchwork.block.PatchInstance;
-import party.stoat.patchwork.block.SFControllerMenu;
-import party.stoat.patchwork.block.SFNetworkConnectable;
+import party.stoat.patchwork.block.*;
 import party.stoat.patchwork.block.controller.SFControllerBlockEntity;
 import party.stoat.patchwork.client.screen.EditorScreen;
 import party.stoat.patchwork.graph.VirtualizedBlockNode;
-import party.stoat.patchwork.graph.NodeDescriptor;
 import party.stoat.patchwork.graph.PatchGraph;
 import party.stoat.patchwork.graphlib.SFCableNode;
 import party.stoat.patchwork.graphlib.SFControllerNode;
+import party.stoat.patchwork.graphlib.SFDriveNode;
 import party.stoat.patchwork.graphlib.SFInterfaceNode;
 import party.stoat.patchwork.virtual.LevelVirtualBlockCache;
 import party.stoat.patchwork.network.*;
 import party.stoat.patchwork.virtual.PlayerVirtualTrackedChunk;
+import party.stoat.patchwork.virtual.ServerSavedData;
 import party.stoat.patchwork.virtual.VirtualManager;
 
 import java.lang.reflect.Type;
@@ -97,6 +96,10 @@ public class Patchwork {
 
     // Creates a new food item with the id "patchwork:example_id", nutrition 1 and saturation 2
     public static final DeferredItem<Item> SUPERCONDUCTING_INGOT = ITEMS.registerSimpleItem("superconducting_ingot", p -> p);
+    public static final DeferredItem<Item> MEDIATION_CORE = ITEMS.registerSimpleItem("mediation_core", p -> p);
+    public static final DeferredItem<Item> NEGOTIATION_CORE = ITEMS.registerSimpleItem("negotiation_core", p -> p);
+
+    public static final DeferredItem<Item> T1_VIRTUAL_STORAGE = ITEMS.registerSimpleItem("t1_virtual_storage", p -> p);
 
     // Creates a creative tab with the id "patchwork:example_tab" for the example item, that is placed after the combat tab
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> PATCHWORK_TAB = CREATIVE_MODE_TABS.register("patchwork", () -> CreativeModeTab.builder()
@@ -109,7 +112,22 @@ public class Patchwork {
                 output.accept(MyBlocks.SF_TERMINAL_ITEM.get());
                 output.accept(MyBlocks.SF_INTERFACE_ITEM.get());
                 output.accept(SUPERCONDUCTING_INGOT.get());
+                output.accept(NEGOTIATION_CORE.get());
+                output.accept(MEDIATION_CORE.get());
+                output.accept(T1_VIRTUAL_STORAGE);
+                output.accept(MyBlocks.SF_DRIVE_ITEM);
             }).build());
+
+    public static final DeferredRegister.DataComponents DATA_COMPONENTS = DeferredRegister.createDataComponents(Registries.DATA_COMPONENT_TYPE, MOD_ID);
+
+
+
+    // No data will be synced across the network
+    public static final Supplier<DataComponentType<SFStorageDriveData>> STORAGE_MODULE_DATA_COMPONENT = DATA_COMPONENTS.registerComponentType(
+            "no_network",
+            builder -> builder
+                    .persistent(SFStorageDriveData.CODEC)
+    );
 
     // The constructor for the mod class is the first code that is run when your mod is loaded.
     // FML will recognize some parameter types like IEventBus or ModContainer and pass them in automatically.
@@ -121,6 +139,7 @@ public class Patchwork {
         UNIVERSE.addNodeType(SFCableNode.TYPE);
         UNIVERSE.addNodeType(SFControllerNode.TYPE);
         UNIVERSE.addNodeType(SFInterfaceNode.TYPE);
+        UNIVERSE.addNodeType(SFDriveNode.TYPE);
 
         UNIVERSE.addDiscoverer(
                 (world, pos) -> world.getBlockState(pos).getBlock() instanceof SFNetworkConnectable connectable ? connectable.createNodes() : List.of()
@@ -133,6 +152,7 @@ public class Patchwork {
         modEventBus.addListener(this::registerPayloads);
         modEventBus.addListener(this::registerCapabilities);
 
+        DATA_COMPONENTS.register(modEventBus);
         MENU_REGISTER.register(modEventBus);
         BLOCK_ENTITY_TYPES.register(modEventBus);
         // Register the Deferred Register to the mod event bus so blocks get registered
@@ -191,7 +211,7 @@ public class Patchwork {
                         Type type = new TypeToken<List<PatchGraph>>() {}.getType();
 
                         editor.state.patchGraphs = new Gson().fromJson(payload.patches(), type);
-                        editor.state.serverProvidedDescriptors = new Gson().fromJson(payload.nodeDescriptors(), new com.google.gson.reflect.TypeToken<List<NodeDescriptor>>() {}.getType());
+                        editor.state.serverProvidedDescriptors = new Gson().fromJson(payload.nodeDescriptors(), new com.google.gson.reflect.TypeToken<List<StorageConfiguration.NodeCategory>>() {}.getType());
 
                         if(editor.state.getCurrentGraph() == null && !editor.state.patchGraphs.isEmpty()) editor.setGraph(editor.state.patchGraphs.get(0));
 
@@ -212,7 +232,10 @@ public class Patchwork {
                 OpenRemoteMachineServerboundPayload.TYPE, OpenRemoteMachineServerboundPayload.CODEC, (payload, context) -> {
                     if(context.player().level().getBlockEntity(payload.pos()) instanceof SFControllerBlockEntity e && context.player() instanceof ServerPlayer serverPlayer) {
                         ServerLevel level = serverPlayer.level();
-                        for(var patch : e.config.instances.values()) {
+                        var graph = Patchwork.UNIVERSE.getGraphWorld(serverPlayer.level()).getGraphForNode(new NodePos(payload.pos(), SFControllerNode.INSTANCE));
+                        var configs = StorageConfiguration.getConfigurationsFromNetwork(graph);
+
+                        outer: for(var config : configs) for(var patch : config.instances.values()) {
                             if(patch.nodes.containsKey(payload.node())) {
                                 var node = patch.nodes.get(payload.node());
 
@@ -244,8 +267,9 @@ public class Patchwork {
                                             containerNode.proxyPos,
                                             false
                                     ));
+
+                                    break outer;
                                 }
-                                break;
                             }
                         }
                     }
@@ -253,37 +277,48 @@ public class Patchwork {
         );
         registrar.playToServer(
                 UpdatePatchServerboundPayload.TYPE, UpdatePatchServerboundPayload.CODEC, (payload, context) -> {
-                    if(context.player().level().getBlockEntity(payload.pos()) instanceof SFControllerBlockEntity e) {
+                    if(context.player().level().getBlockEntity(payload.pos()) instanceof SFControllerBlockEntity e && context.player().level() instanceof ServerLevel serverLevel) {
                         var newPatch = new Gson().fromJson(payload.graph(), PatchGraph.class);
 
-                        e.config.graphs.removeIf(g -> g.graphId.equals(newPatch.graphId));
+                        var graph = Patchwork.UNIVERSE.getGraphWorld(serverLevel).getGraphForNode(new NodePos(payload.pos(), SFControllerNode.INSTANCE));
 
-                        e.config.graphs.add(newPatch);
-                        var instance = PatchInstance.build(newPatch);
-                        e.config.instances.put(newPatch.graphId, instance);
-                        instance.initialize(context.player().level().getServer());
+                        var configs = StorageConfiguration.getConfigurationsFromNetwork(graph);
 
-                        var descriptors = e.config.getNodesFromNetworkResources(Patchwork.UNIVERSE.getGraphWorld((ServerLevel) context.player().level()).getGraphForNode(
-                                new NodePos(payload.pos(), SFControllerNode.INSTANCE)
-                        ), (ServerLevel) context.player().level(), (ServerPlayer) context.player());
+                        for(var config : configs) {
+                            if(config.graphs.stream().anyMatch(g -> g.graphId.equals(payload.id()))) {
+                                config.graphs.removeIf(g -> g.graphId.equals(newPatch.graphId));
 
-                        PacketDistributor.sendToPlayer((ServerPlayer) context.player(), new SFControllerSyncClientboundPayload(new Gson().toJson(e.config.graphs), new Gson().toJson(descriptors), payload.pos()));
+                                config.graphs.add(newPatch);
+                                var instance = PatchInstance.build(newPatch);
+                                config.instances.put(newPatch.graphId, instance);
+                                instance.initialize(context.player().level().getServer());
+
+                                serverLevel.getDataStorage().computeIfAbsent(ServerSavedData.ID).setDirty();
+
+                                StorageConfiguration.syncToPlayer(configs, graph, serverLevel, (ServerPlayer) context.player(), payload.pos());
+                            }
+                        }
                     }
                 }
         );
         registrar.playToServer(
                 CreatePatchServerboundPayload.TYPE, CreatePatchServerboundPayload.CODEC, (payload, context) -> {
                     if(context.player().level().getBlockEntity(payload.pos()) instanceof SFControllerBlockEntity e) {
-                        var patch = new PatchGraph(UUID.randomUUID());
-                        patch.name = "Patch #" + e.config.graphs.size();
-                        e.config.graphs.add(patch);
-                        e.setChanged();
+                        var graph = Patchwork.UNIVERSE.getGraphWorld((ServerLevel) context.player().level()).getGraphForNode(new NodePos(payload.pos(), SFControllerNode.INSTANCE));
+                        var configs = StorageConfiguration.getConfigurationsFromNetwork(graph);
 
-                        var descriptors = e.config.getNodesFromNetworkResources(Patchwork.UNIVERSE.getGraphWorld((ServerLevel) context.player().level()).getGraphForNode(
-                                new NodePos(payload.pos(), SFControllerNode.INSTANCE)
-                        ), (ServerLevel) context.player().level(), (ServerPlayer) context.player());
+                        for(var config : configs) {
+                            if(config.graphs.size() >= config.maxGraphs) continue;
 
-                        PacketDistributor.sendToPlayer((ServerPlayer) context.player(), new SFControllerSyncClientboundPayload(new Gson().toJson(e.config.graphs), new Gson().toJson(descriptors), payload.pos()));
+                            var patch = new PatchGraph(UUID.randomUUID());
+                            patch.name = "Patch #" + config.graphs.size();
+                            config.graphs.add(patch);
+                            e.setChanged();
+
+                            ((ServerLevel) context.player().level()).getDataStorage().computeIfAbsent(ServerSavedData.ID).setDirty();
+
+                            StorageConfiguration.syncToPlayer(configs, graph, (ServerLevel) context.player().level(), (ServerPlayer) context.player(), payload.pos());
+                        }
                     }
                 }
         );

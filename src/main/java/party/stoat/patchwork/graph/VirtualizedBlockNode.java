@@ -6,12 +6,7 @@ import com.kneelawk.graphlib.api.graph.BlockGraph;
 import mekanism.api.chemical.ChemicalResource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.transfer.ResourceHandler;
 import net.neoforged.neoforge.transfer.energy.EnergyHandler;
@@ -20,9 +15,8 @@ import net.neoforged.neoforge.transfer.item.ItemResource;
 import net.neoforged.neoforge.transfer.transaction.Transaction;
 import net.neoforged.neoforge.transfer.transaction.TransactionContext;
 import org.jspecify.annotations.Nullable;
-import party.stoat.patchwork.MyBlocks;
 import party.stoat.patchwork.Patchwork;
-import party.stoat.patchwork.block.ControllerConfiguration;
+import party.stoat.patchwork.block.StorageConfiguration;
 import party.stoat.patchwork.block.PatchInstance;
 import party.stoat.patchwork.block.controller.SFControllerBlockEntity;
 
@@ -67,7 +61,7 @@ public class VirtualizedBlockNode extends Node {
     }
 
     @Override
-    public void tick(ControllerConfiguration config, PatchInstance patchInstance, ServerLevel level, BlockGraph network, TransactionContext context, SFControllerBlockEntity entity) {
+    public void tick(StorageConfiguration config, PatchInstance patchInstance, ServerLevel level, BlockGraph network, TransactionContext context, SFControllerBlockEntity entity) {
         var outputs = this.getOutputConnections(patchInstance.graph);
 
         if(this.proxyPos == null) return;

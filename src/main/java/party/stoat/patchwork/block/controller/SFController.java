@@ -1,14 +1,10 @@
 package party.stoat.patchwork.block.controller;
 
-import com.google.gson.Gson;
 import com.kneelawk.graphlib.api.graph.user.BlockNode;
 import com.kneelawk.graphlib.api.util.NodePos;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
@@ -19,18 +15,13 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.redstone.Orientation;import net.minecraft.world.phys.BlockHitResult;
-import net.neoforged.neoforge.network.PacketDistributor;
-import net.neoforged.neoforge.transfer.energy.EnergyHandler;
-import net.neoforged.neoforge.transfer.transaction.TransactionContext;
-import org.jspecify.annotations.NonNull;import org.jspecify.annotations.Nullable;
+import net.minecraft.world.level.redstone.Orientation;
+import org.jspecify.annotations.Nullable;
 import party.stoat.patchwork.MyBlocks;
 import party.stoat.patchwork.Patchwork;
-import party.stoat.patchwork.block.ControllerConfiguration;
 import party.stoat.patchwork.block.SFNetworkConnectable;
 import party.stoat.patchwork.graphlib.SFCableNode;
 import party.stoat.patchwork.graphlib.SFControllerNode;
-import party.stoat.patchwork.network.SFControllerSyncClientboundPayload;
 
 import java.util.List;
 
@@ -41,7 +32,6 @@ public class SFController extends BaseEntityBlock implements SFNetworkConnectabl
 
     public SFController(Properties properties) {
         super(properties);
-//        this.registerDefaultState(defaultBlockState());
     }
     @Override
     protected MapCodec<? extends BaseEntityBlock> codec() {

@@ -3,10 +3,7 @@ package party.stoat.patchwork.graph;
 import com.kneelawk.graphlib.api.graph.BlockGraph;
 import mekanism.api.chemical.ChemicalResource;
 import net.minecraft.resources.Identifier;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.transfer.ResourceHandler;
 import net.neoforged.neoforge.transfer.energy.EnergyHandler;
 import net.neoforged.neoforge.transfer.fluid.FluidResource;
@@ -15,7 +12,7 @@ import net.neoforged.neoforge.transfer.transaction.Transaction;
 import net.neoforged.neoforge.transfer.transaction.TransactionContext;
 import org.jspecify.annotations.Nullable;
 import party.stoat.patchwork.Patchwork;
-import party.stoat.patchwork.block.ControllerConfiguration;
+import party.stoat.patchwork.block.StorageConfiguration;
 import party.stoat.patchwork.block.PatchInstance;
 import party.stoat.patchwork.block.controller.SFControllerBlockEntity;
 
@@ -50,7 +47,7 @@ public class SFSystemPowerNode extends Node {
     }
 
     @Override
-    public void tick(ControllerConfiguration config, PatchInstance patch, ServerLevel level, BlockGraph network, TransactionContext context, SFControllerBlockEntity controller) {
+    public void tick(StorageConfiguration config, PatchInstance patch, ServerLevel level, BlockGraph network, TransactionContext context, SFControllerBlockEntity controller) {
         var outputs = this.getOutputConnections(patch.graph);
 
         for(var connection : outputs) {

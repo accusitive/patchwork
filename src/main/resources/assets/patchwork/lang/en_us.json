@@ -5,7 +5,12 @@
   "block.patchwork.sf_cable": "SF Cable",
   "block.patchwork.sf_interface": "SF Interface",
   "block.patchwork.sf_terminal": "SF Terminal",
+  "block.patchwork.sf_drive": "SF Drive",
   "item.patchwork.superconducting_ingot": "Superconducting Ingot",
+  "item.patchwork.mediation_core": "Mediation Core",
+  "item.patchwork.negotiation_core": "Negotiation Core",
+  "item.patchwork.t1_virtual_storage":  "T1 Virtual Storage",
+
   "creativeTab.patchwork": "Patchwork",
 
   "patchwork.configuration.title": "Patchwork Configs",
@@ -14,5 +19,6 @@
   "patchwork.configuration.items": "Item List",
   "patchwork.configuration.logDirtBlock": "Log Dirt Block",
   "patchwork.configuration.magicNumberIntroduction": "Magic Number Text",
-  "patchwork.configuration.magicNumber": "Magic Number"
+  "patchwork.configuration.magicNumber": "Magic Number",
+  "gui.patchwork.sf_drive": "SF Drive"
 }

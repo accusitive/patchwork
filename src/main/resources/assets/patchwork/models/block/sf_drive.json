@@ -4,8 +4,8 @@
 	"texture_size": [48, 48],
 	"parent": "patchwork:block/sf_controller",
 	"textures": {
-		"0": "patchwork:block/sf_terminal_powered",
-		"particle": "patchwork:block/sf_terminal_powered"
+		"0": "patchwork:block/sf_drive",
+		"particle": "patchwork:block/sf_drive"
 	},
 	"elements": [
 		{

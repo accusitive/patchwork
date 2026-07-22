@@ -3,17 +3,14 @@ package party.stoat.patchwork.graph;
 import com.kneelawk.graphlib.api.graph.BlockGraph;
 import mekanism.api.chemical.ChemicalResource;
 import net.minecraft.resources.Identifier;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.capabilities.BlockCapability;
 import net.neoforged.neoforge.transfer.ResourceHandler;
 import net.neoforged.neoforge.transfer.energy.EnergyHandler;
 import net.neoforged.neoforge.transfer.fluid.FluidResource;
 import net.neoforged.neoforge.transfer.item.ItemResource;
 import net.neoforged.neoforge.transfer.transaction.TransactionContext;
 import org.jspecify.annotations.Nullable;
-import party.stoat.patchwork.block.ControllerConfiguration;
+import party.stoat.patchwork.block.StorageConfiguration;
 import party.stoat.patchwork.block.PatchInstance;
 import party.stoat.patchwork.block.controller.SFControllerBlockEntity;
 
@@ -46,7 +43,7 @@ public abstract class Node {
 
     public abstract @Nullable EnergyHandler getEnergyHandler(ServerLevel level, NodeDescriptor.IO port);
 
-    public abstract void tick(ControllerConfiguration config, PatchInstance patch, ServerLevel level, BlockGraph network, TransactionContext context, SFControllerBlockEntity controller);
+    public abstract void tick(StorageConfiguration config, PatchInstance patch, ServerLevel level, BlockGraph network, TransactionContext context, SFControllerBlockEntity controller);
 
     public NodeDescriptor getDescriptor() {
         return this.descriptor;

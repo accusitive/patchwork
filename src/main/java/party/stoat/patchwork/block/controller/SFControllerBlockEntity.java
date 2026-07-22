@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import com.kneelawk.graphlib.api.graph.BlockGraph;
 import com.kneelawk.graphlib.api.util.NodePos;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
@@ -14,7 +13,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.MenuProvider;
-import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -27,15 +25,13 @@ import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.ticks.ContainerSingleItem;
 import net.neoforged.neoforge.network.PacketDistributor;
-import net.neoforged.neoforge.transfer.energy.EnergyHandler;
 import net.neoforged.neoforge.transfer.energy.SimpleEnergyHandler;
 import net.neoforged.neoforge.transfer.transaction.Transaction;
-import net.neoforged.neoforge.transfer.transaction.TransactionContext;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import party.stoat.patchwork.MyBlocks;
 import party.stoat.patchwork.Patchwork;
-import party.stoat.patchwork.block.ControllerConfiguration;
+import party.stoat.patchwork.block.StorageConfiguration;
 import party.stoat.patchwork.block.SFControllerMenu;
 import party.stoat.patchwork.block.SFEnergyHandler;
 import party.stoat.patchwork.graph.*;
@@ -47,12 +43,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 
-public class SFControllerBlockEntity extends BlockEntity implements MenuProvider, ContainerSingleItem, WorldlyContainer {
+public class SFControllerBlockEntity extends BlockEntity implements MenuProvider, ContainerSingleItem {
 
     private ItemStack theItem = ItemStack.EMPTY;
     private List<ItemStack> spawnIn = new ArrayList<>();
-
-    public ControllerConfiguration config = new ControllerConfiguration();
 
     public SimpleEnergyHandler storage = new SimpleEnergyHandler(1000000, 1000000, 1000000);
 
@@ -66,24 +60,28 @@ public class SFControllerBlockEntity extends BlockEntity implements MenuProvider
             serverLevel = s;
         } else return;
 
-        for(var instance : entity.config.instances.values()) {
-            for(var node : instance.nodes.values()) {
-                if(node instanceof VirtualizedBlockNode virtual) {
-                    if(!entity.loaded.contains(virtual.proxyPos)) {
-                        serverLevel.setChunkForced(virtual.proxyPos.getX() / 16, virtual.proxyPos.getZ() / 16, true);
-                        entity.loaded.add(virtual.proxyPos);
+        var thisNode = new NodePos(entity.worldPosition, SFControllerNode.INSTANCE);
+        BlockGraph sfNetworkGraph = Patchwork.UNIVERSE.getGraphWorld(serverLevel).getGraphForNode(thisNode);
+
+        if(sfNetworkGraph == null) return;
+        var configs = StorageConfiguration.getConfigurationsFromNetwork(sfNetworkGraph);
+
+        for(var config : configs) {
+            for(var instance : config.instances.values()) {
+                for(var node : instance.nodes.values()) {
+                    if(node instanceof VirtualizedBlockNode virtual) {
+//                        if(!entity.loaded.contains(virtual.proxyPos)) {
+                            serverLevel.setChunkForced(virtual.proxyPos.getX() / 16, virtual.proxyPos.getZ() / 16, true);
+                            entity.loaded.add(virtual.proxyPos);
+//                        }
                     }
                 }
             }
+
+            config.initializeIfNeeded(serverLevel.getServer());
         }
 
-        entity.config.initializeIfNeeded(serverLevel.getServer());
-
-        var thisNode = new NodePos(entity.worldPosition, SFControllerNode.INSTANCE);
-
-        BlockGraph sfNetworkGraph = Patchwork.UNIVERSE.getGraphWorld(serverLevel).getGraphForNode(thisNode);
-
-        if(sfNetworkGraph != null) outer: try(Transaction transaction = Transaction.openRoot()) {
+        outer: try(Transaction transaction = Transaction.openRoot()) {
             for(var sfNode : sfNetworkGraph.getNodes().toList()) {
                 if(sfNode.getBlockState().getBlock() instanceof SFEnergyHandler energyHandler) {
                     var desired = energyHandler.desiredAmount();
@@ -98,7 +96,7 @@ public class SFControllerBlockEntity extends BlockEntity implements MenuProvider
             transaction.commit();
         }
 
-        if(sfNetworkGraph != null) for(var sfNode : sfNetworkGraph.getNodes().toList()) {
+        for(var sfNode : sfNetworkGraph.getNodes().toList()) {
             if(sfNode.getBlockState().getBlock() instanceof SFEnergyHandler energyHandler) {
                 energyHandler.checkPowered(sfNode);
             }
@@ -120,25 +118,25 @@ public class SFControllerBlockEntity extends BlockEntity implements MenuProvider
 
                 var pos = Patchwork.VIRTUAL_MANAGER.allocate(serverLevel, id, stack);
 
-                entity.config.virtualized.add(pos);
+                for(var config : configs) {
+                    if(config.virtualized.size() < config.maxVirtualized) {
+                        config.virtualized.add(pos);
+                        break;
+                    }
+                }
             }
         }
 
-//        if(entity.storage.amount < cost) {
-//            entity.storage.amount = 0;
-//        }
-
-//        if(machineLevel != null && entity.storage.amount >= cost) {
-        if(entity.config != null) {
+        for(var config : configs) {
             var nodeGraph = Patchwork.UNIVERSE.getGraphWorld(serverLevel).getGraphForNode(new NodePos(blockPos, SFControllerNode.INSTANCE));
 //            entity.storage.amount -= cost;
 
 
             outer: try(Transaction transaction = Transaction.openRoot()) {
-                for(var patchInstance : entity.config.instances.values()) {
+                for(var patchInstance : config.instances.values()) {
                     for(var node : patchInstance.nodes.values()) {
                         try(Transaction inner = Transaction.open(transaction)) {
-                            node.tick(entity.config, patchInstance, serverLevel, nodeGraph, inner, entity);
+                            node.tick(config, patchInstance, serverLevel, nodeGraph, inner, entity);
                             var amount = entity.storage.getAmountAsInt() - 10;
                             entity.storage.set(Math.max(amount, 0));
 //                            var amount = 1;
@@ -156,12 +154,9 @@ public class SFControllerBlockEntity extends BlockEntity implements MenuProvider
         }
 
         if(!entity.spawnIn.isEmpty() && entity.watcher != null) {
-            var descriptors = entity.config.getNodesFromNetworkResources(Patchwork.UNIVERSE.getGraphWorld(serverLevel).getGraphForNode(
-                    thisNode
-            ), serverLevel, entity.watcher);
-
-            PacketDistributor.sendToPlayer(entity.watcher, new SFControllerSyncClientboundPayload(new Gson().toJson(entity.config.graphs), new Gson().toJson(descriptors), blockPos));
+            StorageConfiguration.syncToPlayer(configs, sfNetworkGraph, serverLevel, entity.watcher, blockPos);
         }
+
         entity.spawnIn.clear();
     }
 
@@ -173,21 +168,6 @@ public class SFControllerBlockEntity extends BlockEntity implements MenuProvider
     @Override
     public void setTheItem(@NonNull ItemStack itemStack) {
         this.spawnIn.add(itemStack.copyAndClear());
-    }
-
-    @Override
-    public int[] getSlotsForFace(Direction direction) {
-        return new int[0];
-    }
-
-    @Override
-    public boolean canPlaceItemThroughFace(int slot, ItemStack itemStack, @Nullable Direction direction) {
-        return false;
-    }
-
-    @Override
-    public boolean canTakeItemThroughFace(int slot, ItemStack itemStack, Direction direction) {
-        return false;
     }
 
     public static class ExternalStorage {
@@ -203,10 +183,16 @@ public class SFControllerBlockEntity extends BlockEntity implements MenuProvider
 
     @Override
     protected void saveAdditional(ValueOutput output) {
-        this.config.save(output.child("config"));
         ContainerHelper.saveAllItems(output, NonNullList.of(theItem));
 
         super.saveAdditional(output);
+    }
+
+    @Override
+    protected void loadAdditional(ValueInput input) {
+        ContainerHelper.loadAllItems(input, NonNullList.of(theItem));
+
+        super.loadAdditional(input);
     }
 
     @Override
@@ -229,19 +215,6 @@ public class SFControllerBlockEntity extends BlockEntity implements MenuProvider
         return false;
     }
 
-    @Override
-    protected void loadAdditional(ValueInput input) {
-        input.child("config").ifPresentOrElse(
-                config -> {
-                    this.config = ControllerConfiguration.load(config);
-                },
-                () -> this.config = new ControllerConfiguration()
-        );
-
-        ContainerHelper.loadAllItems(input, NonNullList.of(theItem));
-
-        super.loadAdditional(input);
-    }
 
     @Override
     public Component getDisplayName() {

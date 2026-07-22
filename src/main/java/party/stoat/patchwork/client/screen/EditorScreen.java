@@ -20,6 +20,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 import party.stoat.patchwork.Patchwork;
+import party.stoat.patchwork.block.StorageConfiguration;
 import party.stoat.patchwork.block.SFControllerMenu;
 import party.stoat.patchwork.client.Bezier4;
 import party.stoat.patchwork.client.screen.components.*;
@@ -84,7 +85,7 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
         public List<PatchGraph> patchGraphs = new ArrayList<>();
         public List<RenderableGraphNode> selectedNodes = new ArrayList<>();
 
-        public List<NodeDescriptor> serverProvidedDescriptors = new ArrayList<>();
+        public List<StorageConfiguration.NodeCategory> serverProvidedDescriptors = new ArrayList<>();
 
         public void markDirty() {
             this.editorDirty = true;
@@ -232,14 +233,19 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
     }
 
     public Renderable buildRightSidebar() {
-        var externalResources = new Dropdown("Resources", this.state.serverProvidedDescriptors.stream().map(
-                descriptor ->
-                        (Renderable) new RenderableGraphNode(
-                                descriptor,
-                                UUID.randomUUID(),
-                                true
-                        )
-        ).toList());
+        List<Renderable> listElements = new ArrayList<>();
+        listElements.add(new Text("Nodes", 0xffffffff));
+
+        this.state.serverProvidedDescriptors.forEach(
+                category -> listElements.add(new Dropdown(category.name(), category.nodes().stream().map(
+                        descriptor ->
+                                (Renderable) new RenderableGraphNode(
+                                        descriptor,
+                                        UUID.randomUUID(),
+                                        true
+                                )
+                ).toList()) )
+        );
 
         var builtin = new Dropdown("System", List.of(
                 new RenderableGraphNode(
@@ -258,10 +264,12 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
                 )
         ));
 
-        var list = new VerticalList<>(List.of(new Text("Nodes", 0xffffffff), externalResources, builtin), 4, false, false);
+        listElements.add(builtin);
+
+        var list = new VerticalList<>(listElements, 4, false, false);
         list.width = 200;
 
-        var scrollable = new Scrollable<>(list, externalResources.width, minecraft.getWindow().getGuiScaledHeight());
+        var scrollable = new Scrollable<>(list, list.width, minecraft.getWindow().getGuiScaledHeight());
 
         scrollable.offsetX = minecraft.getWindow().getGuiScaledWidth() - list.width;
         scrollable.offsetY = 5;

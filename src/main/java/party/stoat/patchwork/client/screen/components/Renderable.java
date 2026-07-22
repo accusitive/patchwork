@@ -11,16 +11,24 @@ public abstract class Renderable {
 
     public Layout layoutCache;
 
-    public record Layout(int x, int y, int width, int height, Renderable r, List<Layout> children, boolean disabled, boolean scissor) {
+    public record Layout(int x, int y, int width, int height, Renderable r, List<Layout> children, boolean disabled, boolean scissor, float scale) {
+
+        public Layout(int x, int y, int width, int height, Renderable r, List<Layout> children, boolean disabled, boolean scissor) {
+            this(x, y, width, height, r, children, disabled, scissor, 1.0f);
+        }
 
         public Layout(int x, int y, int width, int height, Renderable r, List<Layout> children, boolean disabled) {
-            this(x, y, width, height, r, children, disabled, true);
+            this(x, y, width, height, r, children, disabled, true, 1.0f);
         }
 
         public void paint(GuiGraphicsExtractor g) {
             if(this.scissor) g.enableScissor(this.x, this.y, this.x + this.width, this.y + this.height);
+            g.pose().pushMatrix();
+//            g.pose().scale(this.scale());
+//            g.pose().translate(this.x() / this.scale, this.y() / this.scale);
             this.r.paint(g, this);
             this.children.forEach(c -> c.paint(g));
+            g.pose().popMatrix();
             if(this.scissor) g.disableScissor();
         }
 

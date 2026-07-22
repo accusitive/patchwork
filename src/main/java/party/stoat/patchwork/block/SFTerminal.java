@@ -93,10 +93,11 @@ public class SFTerminal extends DirectionalBlock implements SFNetworkConnectable
                 if(node.getBlockEntity() instanceof SFControllerBlockEntity e) {
                     player.openMenu(e);
                     e.watcher = (ServerPlayer) player;
-                    var descriptors = e.config.getNodesFromNetworkResources(Patchwork.UNIVERSE.getGraphWorld(serverLevel).getGraphForNode(
-                            node.getPos()
-                    ), serverLevel, ((ServerPlayer) player));
-                    PacketDistributor.sendToPlayer((ServerPlayer) player, new SFControllerSyncClientboundPayload(new Gson().toJson(e.config.graphs), new Gson().toJson(descriptors), node.getBlockPos()));
+
+                    var configs = StorageConfiguration.getConfigurationsFromNetwork(graph);
+
+                    StorageConfiguration.syncToPlayer(configs, graph, serverLevel, e.watcher, e.getBlockPos());
+
                     break;
                 }
             }

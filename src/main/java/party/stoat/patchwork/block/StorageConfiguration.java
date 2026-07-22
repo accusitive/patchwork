@@ -3,17 +3,24 @@ package party.stoat.patchwork.block;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.kneelawk.graphlib.api.graph.BlockGraph;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import mekanism.common.lib.transmitter.TransmissionType;
 import mekanism.common.tile.TileEntityChemicalTank;
 import mekanism.common.tile.TileEntityFluidTank;
 import mekanism.common.tile.component.config.DataType;
 import mekanism.common.tile.factory.TileEntityItemStackChemicalToItemStackFactory;
 import mekanism.common.tile.factory.TileEntityItemStackToItemStackFactory;
-import mekanism.common.tile.machine.*;
+import mekanism.common.tile.machine.TileEntityChemicalCrystallizer;
+import mekanism.common.tile.machine.TileEntityChemicalDissolutionChamber;
+import mekanism.common.tile.machine.TileEntityChemicalWasher;
+import mekanism.common.tile.machine.TileEntityElectrolyticSeparator;
 import mekanism.common.tile.prefab.TileEntityAdvancedElectricMachine;
 import mekanism.common.tile.prefab.TileEntityElectricMachine;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
@@ -21,8 +28,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.ARGB;
 import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.level.block.AbstractChestBlock;
-import net.minecraft.world.level.block.AbstractFurnaceBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -30,11 +35,15 @@ import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
+import net.neoforged.neoforge.network.PacketDistributor;
 import party.stoat.patchwork.Patchwork;
 import party.stoat.patchwork.block.sf_interface.SFInterface;
 import party.stoat.patchwork.graph.NodeDescriptor;
 import party.stoat.patchwork.graph.PatchGraph;
+import party.stoat.patchwork.graphlib.SFDriveNode;
 import party.stoat.patchwork.graphlib.SFInterfaceNode;
+import party.stoat.patchwork.network.SFControllerSyncClientboundPayload;
+import party.stoat.patchwork.virtual.ServerSavedData;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,12 +51,65 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.Function;
 
-public class ControllerConfiguration {
+public class StorageConfiguration {
 
-    public HashMap<UUID, PatchInstance> instances = new HashMap<>();
-    public List<PatchGraph> graphs = new ArrayList<>();
-    public boolean initialized = false;
-    public List<BlockPos> virtualized = new ArrayList<>();
+    public transient HashMap<UUID, PatchInstance> instances;
+    public transient boolean initialized;
+
+    public List<PatchGraph> getGraphs() {
+        return graphs;
+    }
+
+    public List<PatchGraph> graphs;
+    public List<BlockPos> virtualized;
+
+    public int maxVirtualized;
+    public int maxGraphs;
+    public final UUID uuid;
+
+    public static final Codec<StorageConfiguration> CODEC = RecordCodecBuilder.create(
+            instance -> instance.group(
+                    Codec.list(BlockPos.CODEC).fieldOf("virtualized").forGetter(StorageConfiguration::getVirtualized),
+                    Codec.INT.fieldOf("maxVirtualized").forGetter(StorageConfiguration::getMaxVirtualized),
+                    Codec.INT.fieldOf("maxGraphs").forGetter(StorageConfiguration::getMaxGraphs),
+                    UUIDUtil.CODEC.fieldOf("uuid").forGetter(StorageConfiguration::getUuid),
+                    Codec.list(PatchGraph.CODEC).fieldOf("graphs").forGetter(StorageConfiguration::getGraphs)
+            ).apply(instance, StorageConfiguration::new)
+    );
+
+    public StorageConfiguration(List<BlockPos> virtualized, int maxVirtualized, int maxGraphs, UUID id, List<PatchGraph> graphs) {
+        this.instances = new HashMap<>();
+        this.virtualized = new ArrayList<>(virtualized);
+        this.maxVirtualized = maxVirtualized;
+        this.maxGraphs = maxGraphs;
+        this.uuid = id != null ? id : UUID.randomUUID();
+        this.graphs = graphs;
+    }
+
+    public StorageConfiguration(UUID uuid) {
+        this.maxVirtualized = 16;
+        this.maxGraphs = 4;
+        this.uuid = uuid;
+        this.graphs = new ArrayList<>();
+        this.virtualized = new ArrayList<>();
+        this.instances = new HashMap<>();
+    }
+
+    public UUID getUuid() {
+        return uuid;
+    }
+
+    public int getMaxVirtualized() {
+        return maxVirtualized;
+    }
+
+    public int getMaxGraphs() {
+        return maxGraphs;
+    }
+
+    public List<BlockPos> getVirtualized() {
+        return virtualized;
+    }
 
     static HashMap<Class<? extends BlockEntity>, BlockConfigurator> configurators = new HashMap<>();
     static HashMap<Class<? extends BlockEntity>, NodeDescriptorProvider> descriptorProvider = new HashMap<>();
@@ -127,12 +189,12 @@ public class ControllerConfiguration {
                 TileEntityElectrolyticSeparator.class,
                 new MekanismConfigurator()
                         .config(TransmissionType.CHEMICAL)
-                            .set(DataType.OUTPUT_1, Direction.WEST)
-                            .set(DataType.OUTPUT_2, Direction.EAST)
-                            .finish()
+                        .set(DataType.OUTPUT_1, Direction.WEST)
+                        .set(DataType.OUTPUT_2, Direction.EAST)
+                        .finish()
                         .config(TransmissionType.FLUID)
-                            .set(DataType.INPUT, Direction.NORTH)
-                            .finish()
+                        .set(DataType.INPUT, Direction.NORTH)
+                        .finish()
                         .config(TransmissionType.ENERGY)
                         .set(DataType.INPUT, Direction.UP)
                         .finish()
@@ -236,15 +298,15 @@ public class ControllerConfiguration {
                 TileEntityChemicalWasher.class,
                 new MekanismConfigurator()
                         .config(TransmissionType.CHEMICAL)
-                            .set(DataType.INPUT, Direction.EAST)
-                            .set(DataType.OUTPUT, Direction.SOUTH)
-                            .finish()
+                        .set(DataType.INPUT, Direction.EAST)
+                        .set(DataType.OUTPUT, Direction.SOUTH)
+                        .finish()
                         .config(TransmissionType.FLUID)
-                            .set(DataType.INPUT, Direction.WEST)
-                            .finish()
+                        .set(DataType.INPUT, Direction.WEST)
+                        .finish()
                         .config(TransmissionType.ENERGY)
-                            .set(DataType.INPUT, Direction.UP)
-                            .finish()
+                        .set(DataType.INPUT, Direction.UP)
+                        .finish()
         );
 
         descriptorProvider.put(
@@ -270,13 +332,13 @@ public class ControllerConfiguration {
                 TileEntityChemicalCrystallizer.class,
                 new MekanismConfigurator()
                         .config(TransmissionType.CHEMICAL)
-                            .set(DataType.INPUT, Direction.WEST)
-                            .finish()
+                        .set(DataType.INPUT, Direction.WEST)
+                        .finish()
                         .config(TransmissionType.ITEM)
-                            .set(DataType.OUTPUT, Direction.EAST)
-                            .finish()
+                        .set(DataType.OUTPUT, Direction.EAST)
+                        .finish()
                         .config(TransmissionType.ENERGY)
-                            .set(DataType.INPUT, Direction.UP)
+                        .set(DataType.INPUT, Direction.UP)
                         .finish()
         );
 
@@ -364,13 +426,13 @@ public class ControllerConfiguration {
         );
     }
 
-    interface BlockConfigurator {
+    public interface BlockConfigurator {
 
         void apply(BlockPos pos, BlockState state, BlockEntity entity, ServerLevel level, ServerPlayer player);
 
     }
 
-    interface NodeDescriptorProvider {
+    public interface NodeDescriptorProvider {
 
         NodeDescriptor apply(String posConfig, Block state, Function<String, String> formatter);
 
@@ -392,9 +454,9 @@ public class ControllerConfiguration {
 
         var posConfiguration = new Gson().toJson(pos);
 
-        for(var nodeDescriptorClass : descriptorProvider.keySet()) {
-            if(nodeDescriptorClass.isInstance(entity)) {
-                return descriptorProvider.get(nodeDescriptorClass).apply(new Gson().toJson(pos), state.getBlock(), p -> p);
+        for (var nodeDescriptorClass : descriptorProvider.keySet()) {
+            if (nodeDescriptorClass.isInstance(entity)) {
+                return descriptorProvider.get(nodeDescriptorClass).apply(new Gson().toJson(pos), state.getBlock(), formatter);
             }
         }
 
@@ -411,32 +473,82 @@ public class ControllerConfiguration {
         );
     }
 
-    public List<NodeDescriptor> getNodesFromNetworkResources(BlockGraph graph, ServerLevel level, ServerPlayer player) {
-        List<NodeDescriptor> nodes = new ArrayList<>();
+    public static record NodeCategory(String name, List<NodeDescriptor> nodes) {
+    }
 
-        for (var virtualizedPos : virtualized) {
-            nodes.add(configureBlockAndGetDescriptor(level, player, virtualizedPos, s -> s));
-        }
+    public static List<StorageConfiguration> getConfigurationsFromNetwork(BlockGraph graph) {
+        List<StorageConfiguration> configs = new ArrayList<>();
 
         for (var node : graph.getNodes().toList()) {
-            if (node.getNode() instanceof SFInterfaceNode) {
-                var facing = node.getBlockState().getValue(SFInterface.FACING);
+            if (node.getNode() instanceof SFDriveNode && node.getBlockEntity() instanceof SFDriveBlockEntity drive) {
+                for(var item : drive.getItems()) {
+                    if(item.getItem() == Patchwork.T1_VIRTUAL_STORAGE.get()) {
+                        SFStorageDriveData config = item.get(Patchwork.STORAGE_MODULE_DATA_COMPONENT.get());
 
-                var proxiedPos = node.getBlockPos().relative(facing);
+                        ServerSavedData data = graph.getGraphView().getWorld().getServer().getDataStorage().computeIfAbsent(ServerSavedData.ID);
 
-                nodes.add(configureBlockAndGetDescriptor(level, player, proxiedPos, s -> "Interface (" + s + ")"));
+                        if(config == null || !data.configs.containsKey(config.id())) {
+                            config = new SFStorageDriveData(UUID.randomUUID());
+
+                            item.set(
+                                    Patchwork.STORAGE_MODULE_DATA_COMPONENT,
+                                    config
+                            );
+
+                            data.configs.put(config.id(), new StorageConfiguration(config.id()));
+                            data.setDirty();
+                        }
+
+                        configs.add(data.configs.get(config.id()));
+                    }
+                }
             }
         }
 
-        return nodes;
+        return configs;
+    }
+
+    public static void syncToPlayer(List<StorageConfiguration> configs, BlockGraph graph, ServerLevel level, ServerPlayer player, BlockPos controllerPos) {
+        var descriptors = StorageConfiguration.getNodesFromNetworkResources(configs, graph, level, player);
+
+        var graphs = new Gson().toJson(configs.stream().filter(c -> c.graphs != null).flatMap(c -> c.graphs.stream()).toList());
+        PacketDistributor.sendToPlayer(player, new SFControllerSyncClientboundPayload(graphs, new Gson().toJson(descriptors), controllerPos));
+    }
+
+    public static List<NodeCategory> getNodesFromNetworkResources(List<StorageConfiguration> configs, BlockGraph graph, ServerLevel level, ServerPlayer player) {
+        List<StorageConfiguration.NodeCategory> categories = new ArrayList<>();
+
+        List<NodeDescriptor> virtualizedCategory = new ArrayList<>();
+        List<NodeDescriptor> interfaceCategory = new ArrayList<>();
+
+        categories.add(new StorageConfiguration.NodeCategory("Interfaces", interfaceCategory));
+        categories.add(new StorageConfiguration.NodeCategory("Virtual", virtualizedCategory));
+
+        for(var config : configs) {
+            for (var virtualizedPos : config.virtualized) {
+                virtualizedCategory.add(config.configureBlockAndGetDescriptor(level, player, virtualizedPos, s -> s));
+            }
+
+            for (var node : graph.getNodes().toList()) {
+                if (node.getNode() instanceof SFInterfaceNode) {
+                    var facing = node.getBlockState().getValue(SFInterface.FACING);
+
+                    var proxiedPos = node.getBlockPos().relative(facing);
+
+                    interfaceCategory.add(config.configureBlockAndGetDescriptor(level, player, proxiedPos, s -> "Interface (" + s + ")"));
+                }
+            }
+        }
+
+        return categories;
     }
 
     private NodeDescriptor configureBlockAndGetDescriptor(ServerLevel level, ServerPlayer player, BlockPos proxiedPos, Function<String, String> formatter) {
         BlockState state = level.getBlockState(proxiedPos);
         BlockEntity entity = level.getBlockEntity(proxiedPos);
 
-        for(var configuratorClass : configurators.keySet()) {
-            if(configuratorClass.isInstance(entity)) {
+        for (var configuratorClass : configurators.keySet()) {
+            if (configuratorClass.isInstance(entity)) {
                 configurators.get(configuratorClass).apply(proxiedPos, state, entity, level, player);
                 break;
             }
@@ -455,22 +567,6 @@ public class ControllerConfiguration {
         }
 
         this.initialized = true;
-    }
-
-    public static ControllerConfiguration load(ValueInput input) {
-        var controllerConfig = new ControllerConfiguration();
-
-        var virtualized = input.childrenList("virtualized").get();
-
-        for (var virt : virtualized) {
-            var pos = BlockPos.of(virt.getLong("pos").get());
-            controllerConfig.virtualized.add(pos);
-        }
-
-        controllerConfig.graphs = new Gson().fromJson(input.getString("graphs").get(), new TypeToken<List<PatchGraph>>() {
-        }.getType());
-
-        return controllerConfig;
     }
 
 }

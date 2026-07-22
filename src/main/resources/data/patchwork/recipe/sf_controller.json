@@ -2,12 +2,15 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "key": {
-    "A": "patchwork:superconducting_ingot"
+    "A": "patchwork:negotiation_core",
+    "B": "patchwork:mediation_core",
+    "C": "#minecraft:shulker_boxes",
+    "D": "patchwork:superconducting_ingot"
   },
   "pattern": [
-    " A ",
-    "A A",
-    " A "
+    "ACB",
+    "   ",
+    "D D"
   ],
   "result": {
     "count": 1,

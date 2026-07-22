@@ -6,9 +6,7 @@ import com.kneelawk.graphlib.api.util.NodePos;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.transfer.ResourceHandler;
 import net.neoforged.neoforge.transfer.energy.EnergyHandler;
@@ -16,7 +14,7 @@ import net.neoforged.neoforge.transfer.item.ItemResource;
 import net.neoforged.neoforge.transfer.transaction.TransactionContext;
 import org.jspecify.annotations.Nullable;
 import party.stoat.patchwork.Patchwork;
-import party.stoat.patchwork.block.ControllerConfiguration;
+import party.stoat.patchwork.block.StorageConfiguration;
 import party.stoat.patchwork.block.PatchInstance;
 import party.stoat.patchwork.block.controller.SFControllerBlockEntity;
 import party.stoat.patchwork.graphlib.SFInterfaceNode;
@@ -34,7 +32,7 @@ public class ExternalStorageNode extends VirtualizedBlockNode {
     }
 
     @Override
-    public void tick(ControllerConfiguration config, PatchInstance patchInstance, ServerLevel level, BlockGraph network, TransactionContext context, SFControllerBlockEntity controller) {
+    public void tick(StorageConfiguration config, PatchInstance patchInstance, ServerLevel level, BlockGraph network, TransactionContext context, SFControllerBlockEntity controller) {
         if(network.getNodeAt(new NodePos(this.config.interfacePos, SFInterfaceNode.INSTANCE)) != null) super.tick(config, patchInstance, level, network, context, controller);
     }
 

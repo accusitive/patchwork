@@ -46,7 +46,7 @@ public class PatchworkClient {
 
     @SubscribeEvent
     static void onClientSetup(FMLClientSetupEvent event) {
-        LINE = RenderPipeline.builder(new RenderPipeline.Snippet[]{RenderPipelines.GUI_SNIPPET}).withLocation("pipeline/gui").withPrimitiveTopology(PrimitiveTopology.TRIANGLES).withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, true)).withoutStencilTest().withCull(false).build();
+        LINE = RenderPipeline.builder(new RenderPipeline.Snippet[]{RenderPipelines.GUI_SNIPPET}).withLocation("pipeline/gui").withPrimitiveTopology(PrimitiveTopology.TRIANGLES).withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, true)).withCull(false).build();
 
 
     }
