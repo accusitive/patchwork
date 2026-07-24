@@ -5,6 +5,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.core.BlockPos;
@@ -40,6 +41,7 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
     private static final Identifier CONTAINER_TEXTURE = Identifier.fromNamespaceAndPath(Patchwork.MOD_ID, "textures/gui/container/inventory.png");
     public static final Identifier MAGNIFYING_GLASS_TEXTURE = Identifier.fromNamespaceAndPath(Patchwork.MOD_ID, "textures/gui/magnifying_glass.png");
     public static final Identifier EJECT_TEXTURE = Identifier.fromNamespaceAndPath(Patchwork.MOD_ID, "textures/gui/eject.png");
+    public static final Identifier WRENCH_TEXTURE = Identifier.fromNamespaceAndPath(Patchwork.MOD_ID, "textures/gui/eject.png");
 
     private static final int CONTAINER_WIDTH = 175;
     private static final int CONTAINER_HEIGHT = 90;
@@ -84,10 +86,12 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
         public Many graphNodes = new Many(new ArrayList<>());
         public HashMap<UUID, RenderableGraphNode> graphNodeToRenderableMap = new HashMap<>();
 
-        public List<PatchGraph> patchGraphs = new ArrayList<>();
-        public List<RenderableGraphNode> selectedNodes = new ArrayList<>();
+        public ArrayList<PatchGraph> patchGraphs = new ArrayList<>();
+        public ArrayList<RenderableGraphNode> selectedNodes = new ArrayList<>();
 
-        public List<StorageConfiguration.NodeCategory> serverProvidedDescriptors = new ArrayList<>();
+        public ArrayList<StorageConfiguration.NodeCategory> serverProvidedDescriptors = new ArrayList<>();
+
+        public @Nullable RenderableGraphNode nodeBeingEdited;
 
         public void markDirty() {
             this.editorDirty = true;
@@ -104,9 +108,19 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
     }
 
     @Override
+    public boolean charTyped(CharacterEvent event) {
+        if(this.lastLayout != null) {
+            this.lastLayout.charTyped(event, this.state);
+        }
+
+        return true;
+    }
+
+    @Override
     public boolean mouseClicked(@NonNull MouseButtonEvent event, boolean doubleClick) {
         if (this.lastLayout != null) {
             var result = this.lastLayout.onMouseDown((int) event.x(), (int) event.y(), this.state);
+            this.lastLayout.onMouseDownGlobal((int) event.x(), (int) event.y(), this.state);
 
             if(!result) {
                 state.selectedNodes.forEach(node -> node.highlighted = false);
@@ -151,12 +165,15 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
 
     public void save() {
         if(state.getCurrentGraph() == null) return;
+
+        if(state.nodeBeingEdited != null) {
+            state.nodeBeingEdited.setConfiguring(false, this.state);
+        }
+
         this.state.editorDirty = false;
         ClientPacketDistributor.sendToServer(new UpdatePatchServerboundPayload(
                 state.getCurrentGraph().graphId,
-                new Gson().toJson(
-                        state.getCurrentGraph()
-                ),
+                state.getCurrentGraph(),
                 this.state.controllerPos
         ));
     }
@@ -164,6 +181,8 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
     @Override
     public boolean keyReleased(KeyEvent event) {
         if(event.key() == GLFW.GLFW_KEY_LEFT_SHIFT) state.shiftPressed = false;
+
+        if(this.lastLayout != null) this.lastLayout.onKeyUp(event);
 
         return super.keyReleased(event);
     }
@@ -189,11 +208,11 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
             state.selectedNodes.clear();
         }
 
-        if(this.lastLayout != null) this.lastLayout.onKeyDown(event.key());
+        if(this.lastLayout != null) this.lastLayout.onKeyDown(event);
 
-        super.keyPressed(event);
+        if(event.isEscape()) super.keyPressed(event);
 
-        return super.keyPressed(event);
+        return true;
     }
 
     static class ItemStackNodeIcon extends NodeIcon {
@@ -255,7 +274,7 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
                                 "System Power",
                                 List.of(),
                                 List.of(
-                                        new NodeDescriptor.IO("Power out", "out", new NodeDescriptor.Data(NodeDescriptor.DataType.Energy, false), null)
+                                        new NodeDescriptor.IO("Power out", "out", new NodeDescriptor.Data(NodeDescriptor.DataType.Energy, false), Optional.empty())
                                 ),
                                 NodeDescriptor.DataType.Energy.color,
                                 SFSystemPowerNode.IDENTIFIER,
@@ -268,10 +287,10 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
                         new NodeDescriptor(
                                 "Splitter",
                                 List.of(
-                                        new NodeDescriptor.IO("Items in", "in", new NodeDescriptor.Data(NodeDescriptor.DataType.Item, false), null)
+                                        new NodeDescriptor.IO("Items in", "in", new NodeDescriptor.Data(NodeDescriptor.DataType.Item, false), Optional.empty())
                                 ),
                                 List.of(
-                                        new NodeDescriptor.IO("Items out", "out", new NodeDescriptor.Data(NodeDescriptor.DataType.Item, true), null)
+                                        new NodeDescriptor.IO("Items out", "out", new NodeDescriptor.Data(NodeDescriptor.DataType.Item, true), Optional.empty())
                                 ),
                                 NodeDescriptor.DataType.Item.color,
                                 SplitterNode.IDENTIFIER,
@@ -385,7 +404,7 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
         List<Integer> colors = new ArrayList<>();
 
         if(this.state.draggingFrom != null) {
-            var from = new Vec2(this.state.draggingFrom.layoutCache.x(), this.state.draggingFrom.layoutCache.y());
+            var from = new Vec2(this.state.draggingFrom.layoutCache.x() + 2, this.state.draggingFrom.layoutCache.y() + 2);
             var to = new Vec2(mouseX - 2, mouseY - 2);
 
             connections.add(new Vec2[] { from, to });
@@ -395,19 +414,21 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
         if(state.getCurrentGraph() != null) for(var conn : state.getCurrentGraph().connections) {
             var fromNode = state.graphNodeToRenderableMap.get(conn.from());
             var toNode = state.graphNodeToRenderableMap.get(conn.to());
-
             if(fromNode == null || toNode == null) continue;
 
-            var fromPort = fromNode.ports.get(conn.keyFrom()).port;
-            var toPort = toNode.ports.get(conn.keyTo()).port;
+            var toPort = toNode.ports.get(conn.keyTo());
+            var fromPort = fromNode.ports.get(conn.keyFrom());
+
+            if(toPort == null || fromPort == null) continue;
+
 
             if(fromPort.layoutCache == null || toPort.layoutCache == null) continue;
 
             connections.add(new Vec2[] {
-                    new Vec2(fromPort.layoutCache.x(), fromPort.layoutCache.y() + 2),
-                    new Vec2(toPort.layoutCache.x(), toPort.layoutCache.y() + 2),
+                    new Vec2(fromPort.port.layoutCache.x(), fromPort.port.layoutCache.y() + 2),
+                    new Vec2(toPort.port.layoutCache.x(), toPort.port.layoutCache.y() + 2),
             });
-            colors.add(fromPort.type.color);
+            colors.add(fromPort.port.type.color);
         }
 
 

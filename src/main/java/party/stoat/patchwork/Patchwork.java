@@ -12,6 +12,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.profiling.jfr.event.ChunkGenerationEvent;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.inventory.MenuType;
@@ -29,7 +30,10 @@ import net.neoforged.neoforge.capabilities.BlockCapability;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
+import net.neoforged.neoforge.data.event.GatherDataEvent;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.level.ChunkDataEvent;
+import net.neoforged.neoforge.event.level.ChunkEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.registries.DeferredItem;
@@ -57,6 +61,7 @@ import party.stoat.patchwork.block.*;
 import party.stoat.patchwork.block.sf_controller.SFControllerBlockEntity;
 import party.stoat.patchwork.block.sf_controller.SFControllerMenu;
 import party.stoat.patchwork.client.screen.EditorScreen;
+import party.stoat.patchwork.item.VirtualStorageItem;
 import party.stoat.patchwork.patchgraph.PatchInstance;
 import party.stoat.patchwork.patchgraph.StorageConfiguration;
 import party.stoat.patchwork.patchgraph.nodes.VirtualizedBlockNode;
@@ -69,10 +74,7 @@ import party.stoat.patchwork.virtual.*;
 import party.stoat.patchwork.network.*;
 
 import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Supplier;
 
 // The value here should match an entry in the META-INF/neoforge.mods.toml file
@@ -108,9 +110,9 @@ public class Patchwork {
     public static final DeferredItem<Item> MEDIATION_CORE = ITEMS.registerSimpleItem("mediation_core", p -> p);
     public static final DeferredItem<Item> NEGOTIATION_CORE = ITEMS.registerSimpleItem("negotiation_core", p -> p);
 
-    public static final DeferredItem<Item> T1_VIRTUAL_STORAGE = ITEMS.registerSimpleItem("t1_virtual_storage", p -> p.stacksTo(1));
-    public static final DeferredItem<Item> T2_VIRTUAL_STORAGE = ITEMS.registerSimpleItem("t2_virtual_storage", p -> p.stacksTo(1));
-    public static final DeferredItem<Item> T3_VIRTUAL_STORAGE = ITEMS.registerSimpleItem("t3_virtual_storage", p -> p.stacksTo(1).component(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true));
+    public static final DeferredItem<Item> T1_VIRTUAL_STORAGE = ITEMS.registerItem("t1_virtual_storage", props -> new VirtualStorageItem(props, 1, 4));
+    public static final DeferredItem<Item> T2_VIRTUAL_STORAGE = ITEMS.registerItem("t2_virtual_storage", props -> new VirtualStorageItem(props, 2, 16));
+    public static final DeferredItem<Item> T3_VIRTUAL_STORAGE = ITEMS.registerItem("t3_virtual_storage", p -> new VirtualStorageItem(p.stacksTo(1).component(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true), 8, 64));
 
     public static final DeferredItem<Item> T1_STORAGE_CELL = ITEMS.registerSimpleItem("t1_storage_cell", p -> p);
     public static final DeferredItem<Item> T2_STORAGE_CELL = ITEMS.registerSimpleItem("t2_storage_cell", p -> p);
@@ -198,6 +200,14 @@ public class Patchwork {
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
     }
 
+    public static boolean isPosTotallyEffedTheFuckUp(double x, double z) {
+        return Math.abs(x) > 29999980.0D || Math.abs(z) > 29999980.0D;
+    }
+
+    public static boolean isPosTotallyEffedTheFuckUp(int x, int z) {
+        return Math.abs(x) > 29999980 || Math.abs(z) > 29999980;
+    }
+
     static class Graphs {
         public HashMap<UUID, PatchGraph> graphs;
     }
@@ -246,7 +256,7 @@ public class Patchwork {
                                     level.addFreshEntity(new ItemEntity(level, context.player().getX(), context.player().getY(), context.player().getZ(), itemEntity.getItem()));
                                 }
 
-                                level.getDataStorage().computeIfAbsent(ServerSavedData.ID).setDirty();
+                                level.getServer().getDataStorage().computeIfAbsent(ServerSavedData.ID).setDirty();
 
                                 break;
                             }
@@ -275,7 +285,7 @@ public class Patchwork {
                 SFControllerSyncClientboundPayload.TYPE, SFControllerSyncClientboundPayload.CODEC, (payload, context) -> {
                     var mc = Minecraft.getInstance();
 
-                    if(mc.gui.screen() instanceof EditorScreen editor) {
+                    if(mc.screen instanceof EditorScreen editor) {
                         UUID currentGraphId = null;
                         HashMap<UUID, Vec2> oldPositions = null;
 
@@ -285,10 +295,8 @@ public class Patchwork {
                         }
 
                         editor.state.controllerPos = payload.controllerPos();
-                        Type type = new TypeToken<List<PatchGraph>>() {}.getType();
-
-                        editor.state.patchGraphs = new Gson().fromJson(payload.patches(), type);
-                        editor.state.serverProvidedDescriptors = new Gson().fromJson(payload.nodeDescriptors(), new com.google.gson.reflect.TypeToken<List<StorageConfiguration.NodeCategory>>() {}.getType());
+                        editor.state.patchGraphs = new ArrayList<>(payload.patches());
+                        editor.state.serverProvidedDescriptors = new ArrayList<>(payload.nodeDescriptors());
 
                         if(editor.state.getCurrentGraph() == null && !editor.state.patchGraphs.isEmpty()) editor.setGraph(editor.state.patchGraphs.get(0));
 
@@ -355,7 +363,7 @@ public class Patchwork {
         registrar.playToServer(
                 UpdatePatchServerboundPayload.TYPE, UpdatePatchServerboundPayload.CODEC, (payload, context) -> {
                     if(context.player().level().getBlockEntity(payload.pos()) instanceof SFControllerBlockEntity e && context.player().level() instanceof ServerLevel serverLevel) {
-                        var newPatch = new Gson().fromJson(payload.graph(), PatchGraph.class);
+                        var newPatch = payload.graph();
 
                         var graph = Patchwork.UNIVERSE.getGraphWorld(serverLevel).getGraphForNode(new NodePos(payload.pos(), SFControllerNode.INSTANCE));
 
@@ -370,7 +378,7 @@ public class Patchwork {
                                 config.instances.put(newPatch.graphId, instance);
                                 instance.initialize(context.player().level().getServer());
 
-                                serverLevel.getDataStorage().computeIfAbsent(ServerSavedData.ID).setDirty();
+                                serverLevel.getServer().getDataStorage().computeIfAbsent(ServerSavedData.ID).setDirty();
 
                                 StorageConfiguration.syncToPlayer(configs, graph, serverLevel, (ServerPlayer) context.player(), payload.pos());
                             }
@@ -384,17 +392,21 @@ public class Patchwork {
                         var graph = Patchwork.UNIVERSE.getGraphWorld((ServerLevel) context.player().level()).getGraphForNode(new NodePos(payload.pos(), SFControllerNode.INSTANCE));
                         var configs = StorageConfiguration.getConfigurationsFromNetwork(graph);
 
+                        var total = configs.stream().mapToInt(c -> c.graphs.size()).sum();
+
                         for(var config : configs) {
                             if(config.graphs.size() >= config.maxGraphs) continue;
 
                             var patch = new PatchGraph(UUID.randomUUID());
-                            patch.name = "Patch #" + config.graphs.size();
+                            patch.name = "Patch #" + (total + 1);
                             config.graphs.add(patch);
                             e.setChanged();
 
-                            ((ServerLevel) context.player().level()).getDataStorage().computeIfAbsent(ServerSavedData.ID).setDirty();
-
                             StorageConfiguration.syncToPlayer(configs, graph, (ServerLevel) context.player().level(), (ServerPlayer) context.player(), payload.pos());
+
+                            ((ServerLevel) context.player().level()).getServer().getDataStorage().computeIfAbsent(ServerSavedData.ID).setDirty();
+
+                            break;
                         }
                     }
                 }
@@ -405,7 +417,7 @@ public class Patchwork {
         event.registerBlockEntity(
                 Capabilities.Energy.BLOCK,
                 MyBlocks.SF_CONTROLLER_BLOCK_ENTITY.get(),
-                (entity, side) -> entity.storage
+                (entity, side) -> entity.handler
         );
     }
 
