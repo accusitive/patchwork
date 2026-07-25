@@ -42,9 +42,11 @@ public class ScissorNode extends Renderable {
     public void onScroll(double x, double y, double scrollX, double scrollY) {
         if(this.zoomable) {
             var newScale = this.scale + (scrollY * 0.05);
+            newScale = Math.clamp(newScale, 0.1, 2.0);
+            if(newScale == this.scale) return;
             this.innerOffsetX += (int) (x * (scale - newScale));
             this.innerOffsetY += (int) (y * (scale - newScale));
-            this.scale += (scrollY * 0.05);
+            this.scale = newScale;
         }
     }
 
