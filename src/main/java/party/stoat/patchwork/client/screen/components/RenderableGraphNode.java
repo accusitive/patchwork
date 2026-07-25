@@ -36,7 +36,6 @@ public class RenderableGraphNode extends Renderable {
 
     private ImageButton openRemote;
     private ImageButton ejectRemote;
-
     private static final int HEADER_HEIGHT = 20;
 
     public boolean highlighted = false;
@@ -165,24 +164,16 @@ public class RenderableGraphNode extends Renderable {
 
     @Override
     public void paint(GuiGraphicsExtractor g, Layout l) {
-        super.paint(g, l);
-
         var borderFill = this.highlighted ? ARGB.color(255, 200, 200, 200) : ARGB.color(255, 60, 60, 60);
 
-        g.fill(l.x(), l.y(), l.x() + l.width(), l.y() + l.height(), borderFill);
-        g.fill(l.x() + 1, l.y() + 1, l.x() + l.width() - 1, l.y() + l.height() - 1, ARGB.color(255, 35, 35, 35));
-        g.fill(l.x() + 1, l.y() + 1, l.x() + l.width() - 1, l.y() + HEADER_HEIGHT, this.descriptor.color());
+        g.fill(0, 0, l.width(), l.height(), borderFill);
+        g.fill(1, 1, l.width() - 1, l.height() - 1, ARGB.color(255, 35, 35, 35));
+        g.fill(1, 1, l.width() - 1, HEADER_HEIGHT, this.descriptor.color());
 
         if (descriptor.icon() != null) {
             Item item = BuiltInRegistries.ITEM.get(descriptor.icon()).get().value();
-            g.pose().pushMatrix();
 
-            g.pose().scale(1.25f);
-            int scaledX = (int) (((float) l.x() + l.width() - 20) / 1.25f);
-            int scaledY = (int) (((float) l.y()) / 1.25f);
-
-            g.item(new ItemStack(item, 1), scaledX, scaledY);
-            g.pose().popMatrix();
+            g.item(new ItemStack(item, 1), l.width() - 18, 2);
         }
     }
 
@@ -199,7 +190,7 @@ public class RenderableGraphNode extends Renderable {
     }
 
     @Override
-    public boolean onMouseDown(int x, int y, EditorScreen.EditorState state) {
+    public boolean onMouseDown(double x, double y, EditorScreen.EditorState state) {
         if (state.getCurrentGraph() == null) return false;
 
         if (hasClicked) {
@@ -230,23 +221,14 @@ public class RenderableGraphNode extends Renderable {
         }
 
         if (y < EditorScreen.FONT.lineHeight * 2) mouseDown = true;
-        mX = x;
-        mY = y;
+        mX = (int) x;
+        mY = (int) y;
 
-        return mouseDown;
+        return true;
     }
 
     @Override
-    public void onMouseDownGlobal(int x, int y, EditorScreen.EditorState state) {
-        if (this.layoutCache != null) {
-            if (!this.layoutCache.contains(x, y)) {
-                this.setConfiguring(false, state);
-            }
-        }
-    }
-
-    @Override
-    public void onMouseMove(int x, int y, EditorScreen.EditorState state) {
+    public void onMouseMove(double x, double y, EditorScreen.EditorState state) {
         dragging = mouseDown;
 
         if (dragging) {
@@ -280,7 +262,7 @@ public class RenderableGraphNode extends Renderable {
     }
 
     @Override
-    public boolean onMouseUp(int x, int y, EditorScreen.EditorState state) {
+    public boolean onMouseUp(double x, double y, EditorScreen.EditorState state) {
         if (this.layoutCache.contains(x + this.layoutCache.x(), y + this.layoutCache.y()) && !this.preview) {
             if (!dragging) {
                 if (!state.shiftPressed) {
@@ -425,10 +407,10 @@ public class RenderableGraphNode extends Renderable {
         var childLayouts = new ArrayList<Layout>();
 
         for (var c : this.children) {
-            var childLayout = c.extractLayout(dX, dY);
+            var childLayout = c.extractLayout(0, 0);
             childLayouts.add(childLayout);
-            w = Math.max(w, childLayout.x() + childLayout.width() - dX);
-            h = Math.max(h, childLayout.y() + childLayout.height() - dY);
+            w = Math.max(w, childLayout.x() + childLayout.width());
+            h = Math.max(h, childLayout.y() + childLayout.height());
         }
 
         return new Layout(dX, dY, w, h, this, childLayouts, false);

@@ -28,11 +28,11 @@ public class NodeIOPort extends Renderable {
 
     @Override
     public void paint(GuiGraphicsExtractor g, Layout l) {
-        g.fill(l.x() + 2, l.y() + 2, l.x() + 6, l.y() + 6, this.type.color);
+        g.fill(2, 2, 6, 6, this.type.color);
     }
 
     @Override
-    public boolean onMouseDown(int x, int y, EditorScreen.EditorState state) {
+    public boolean onMouseDown(double x, double y, EditorScreen.EditorState state) {
         var oldConnection = state.getCurrentGraph().connections.stream().filter(
                 conn -> conn.keyTo().equals(this.key) && conn.to().equals(this.owner)
         ).findFirst();
@@ -50,7 +50,7 @@ public class NodeIOPort extends Renderable {
     }
 
     @Override
-    public boolean onMouseUp(int x, int y, EditorScreen.EditorState state) {
+    public boolean onMouseUp(double x, double y, EditorScreen.EditorState state) {
         if (x >= 0 && x <= this.layoutCache.width() && y >= 0 && y <= this.layoutCache.height()) {
             if (state.draggingFrom != null && state.draggingFrom != this && state.draggingFrom.owner != this.owner) {
                 var fromDescriptor = state.getCurrentGraph().nodeDescriptors.get(state.draggingFrom.owner);

@@ -5,7 +5,7 @@ import party.stoat.patchwork.client.screen.EditorScreen;
 
 import java.util.List;
 
-public class Text extends Renderable {
+public class    Text extends Renderable {
 
     String content;
     int color;
@@ -24,6 +24,6 @@ public class Text extends Renderable {
     public void paint(GuiGraphicsExtractor g, Layout l) {
         super.paint(g, l);
         
-        g.text(EditorScreen.FONT, this.content, l.x(), l.y(), this.color);
+        g.text(EditorScreen.FONT, this.content,0, 0, this.color);
     }
 }

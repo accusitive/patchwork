@@ -20,7 +20,7 @@ public class Scrollable<T extends Renderable> extends Renderable {
 
     public Scrollable(T child, int width, int height) {
         this.child = child;
-        this.scissor = new ScissorNode(this.child, false);
+        this.scissor = new ScissorNode(this.child, false, false);
 
         this.width = width;
         this.height = height;
@@ -56,12 +56,12 @@ public class Scrollable<T extends Renderable> extends Renderable {
 //        int y0 = l.y();
 //        int y1 = l.y() + 100;
 
-        g.fill(l.x() + this.width - 1, l.y() + y0, l.x() + this.width, l.y() + y1, ARGB.color(255, col, col, col));
+        g.fill(this.width - 1, y0, this.width, y1, ARGB.color(255, col, col, col));
     }
 
     @Override
     protected Layout extractInnerLayout(int x, int y) {
-        var l = this.scissor.extractLayout(x, y);
+        var l = this.scissor.extractLayout(0, 0);
         return new Layout(l.x(), l.y(), l.x() + this.width, l.y() + this.height, this, List.of(l), false);
     }
 

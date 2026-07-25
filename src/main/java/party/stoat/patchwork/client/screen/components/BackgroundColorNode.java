@@ -15,13 +15,13 @@ public class BackgroundColorNode<T extends Renderable> extends Renderable {
 
     @Override
     public void paint(GuiGraphicsExtractor g, Layout l) {
-        g.fill(l.x(), l.y(), l.x() + l.width(), l.y() + l.height(), this.color);
+        g.fill(0, 0, l.width(), l.height(), this.color);
     }
 
     @Override
     protected Layout extractInnerLayout(int x, int y) {
-        var l = child.extractLayout(x, y);
+        var l = child.extractLayout(0, 0);
 
-        return new Layout(l.x(), l.y(), l.width(), l.height(), this, List.of(l), false);
+        return new Layout(x, y, l.width(), l.height(), this, List.of(l), false);
     }
 }

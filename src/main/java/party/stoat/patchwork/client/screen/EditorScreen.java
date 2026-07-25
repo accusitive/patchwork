@@ -225,7 +225,7 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
 
         @Override
         public void paint(GuiGraphicsExtractor g, Layout l) {
-            g.item(stack, l.x(), l.y());
+            g.item(stack, 0, 0);
         }
 
         @Override
@@ -243,6 +243,8 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
     public void refresh(int width, int height) {
         this.leftSidebar = this.buildLeftSidebar();
         this.rightSidebar = this.buildRightSidebar();
+
+        this.rightSidebar.offsetX = minecraft.getWindow().getGuiScaledWidth() - 200;
 
         if(this.canvas == null || this.rightSidebar == null) this.resize(width, height);
 
@@ -320,9 +322,7 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
 
         state.graphNodes.scissor = false;
 
-        this.canvas = new ScissorNode(state.graphNodes, true);
-
-        this.rightSidebar = this.buildRightSidebar();
+        this.canvas = new CanvasNode(state.graphNodes, true, true);
 
         this.canvas.width = minecraft.getWindow().getGuiScaledWidth() - 400;
         this.canvas.height = minecraft.getWindow().getGuiScaledHeight();
@@ -489,7 +489,7 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
         if(this.canvas != null && this.canvas.layoutCache != null) {
             var cache = this.canvas.layoutCache;
 
-            graphics.enableScissor(cache.x(), cache.y(), cache.x() + cache.width(), cache.y() + cache.height());
+//            graphics.enableScissor(cache.x(), cache.y(), cache.x() + cache.width(), cache.y() + cache.height());
 
             for(int x=0;x<(cache.width() / gridSize) + 1;x++) {
                 int renderX = (x * gridSize) + cache.x() + (this.canvas.innerOffsetX % gridSize);
@@ -501,7 +501,7 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
                 graphics.horizontalLine(cache.x(), cache.x() + cache.width(), renderY, 0x11555555);
             }
 
-            graphics.disableScissor();
+//            graphics.disableScissor();
         }
 
         if(this.lastLayout != null) this.lastLayout.paint(graphics);

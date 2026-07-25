@@ -12,46 +12,60 @@ public class ScissorNode extends Renderable {
     public int width = 0;
     public int height = 0;
 
-    public boolean draggable = false;
+    public boolean draggable;
+    public boolean zoomable;
+
     private int mX = -1;
     private int mY = -1;
     private boolean dragging = false;
+    public double scale = 1.0;
 
     public Renderable child;
 
-    public ScissorNode(Renderable child, boolean draggable) {
+    public ScissorNode(Renderable child, boolean draggable, boolean zoomable) {
         this.child = child;
         this.draggable = draggable;
+        this.zoomable = zoomable;
     }
 
     @Override
-    public boolean onMouseDown(int x, int y, EditorScreen.EditorState state) {
+    public boolean onMouseDown(double x, double y, EditorScreen.EditorState state) {
         dragging = this.draggable;
 
-        mX = x - this.innerOffsetX;
-        mY = y - this.innerOffsetY;
+        mX = (int) (x - this.innerOffsetX);
+        mY = (int) (y - this.innerOffsetY);
 
         return false;
     }
 
     @Override
-    public void onMouseMove(int x, int y, EditorScreen.EditorState state) {
-        if(this.dragging) {
-            this.innerOffsetX = x - mX;
-            this.innerOffsetY = y - mY;
+    public void onScroll(double x, double y, double scrollX, double scrollY) {
+        if(this.zoomable) {
+            var newScale = this.scale + (scrollY * 0.05);
+            this.innerOffsetX += (int) (x * (scale - newScale));
+            this.innerOffsetY += (int) (y * (scale - newScale));
+            this.scale += (scrollY * 0.05);
         }
     }
 
     @Override
-    public boolean onMouseUp(int x, int y, EditorScreen.EditorState state) {
+    public void onMouseMove(double x, double y, EditorScreen.EditorState state) {
+        if(this.dragging) {
+            this.innerOffsetX = (int) (x - mX);
+            this.innerOffsetY = (int) (y - mY);
+        }
+    }
+
+    @Override
+    public boolean onMouseUp(double x, double y, EditorScreen.EditorState state) {
         this.dragging = false;
         return false;
     }
 
     @Override
     protected Layout extractInnerLayout(int x, int y) {
-        var childLayout = child.extractLayout(x + innerOffsetX, y + innerOffsetY);
+        var childLayout = child.extractLayout(innerOffsetX, innerOffsetY);
 
-        return new Layout(x, y, width != 0 ? width : childLayout.width(), height != 0 ? height : childLayout.height(), this, List.of(childLayout), false);
+        return new Layout(x, y, (width != 0 ? width : childLayout.width()), (height != 0 ? height : childLayout.height()), this, List.of(childLayout), false, true, (float) this.scale);
     }
 }

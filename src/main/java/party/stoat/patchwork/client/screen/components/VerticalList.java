@@ -30,7 +30,7 @@ public class VerticalList<T extends Renderable> extends Renderable {
         var c = new ArrayList<Layout>();
 
         for (var e : this.elements) {
-            var childLayout = e.extractLayout(dX, dY + listY);
+            var childLayout = e.extractLayout(0, listY);
             listY += childLayout.height() + this.padding;
 
             maxWidth = Math.max(maxWidth, childLayout.width());
@@ -47,7 +47,7 @@ public class VerticalList<T extends Renderable> extends Renderable {
                 var layout = c.get(i);
                 var element = this.elements.get(i);
 
-                var childLayout = element.extractLayout(dX + (maxWidth - layout.width()), dY + listY);
+                var childLayout = element.extractLayout((maxWidth - layout.width()), listY);
                 listY += childLayout.height() + this.padding;
 
                 newLayouts.add(childLayout);
@@ -63,7 +63,7 @@ public class VerticalList<T extends Renderable> extends Renderable {
                 var layout = c.get(i);
                 var element = this.elements.get(i);
 
-                var childLayout = element.extractLayout(dX + (maxWidth - layout.width()) / 2, dY + listY);
+                var childLayout = element.extractLayout((maxWidth - layout.width()) / 2, listY);
                 listY += childLayout.height() + this.padding;
 
                 newLayouts.add(childLayout);

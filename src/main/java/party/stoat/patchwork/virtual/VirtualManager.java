@@ -26,27 +26,34 @@ public class VirtualManager {
             var data = level.getDataStorage().computeIfAbsent(MachineLevelSavedData.ID);
 
             int count = data.increment();
-            int x = -(level.getWorldBorder().getAbsoluteMaxSize() + 16);
-            int y = 0;
-            int z = -(level.getWorldBorder().getAbsoluteMaxSize() + 16) + (count * 160);
+
+            var worldHeight = level.getMaxY() - level.getMinY();
+            var maxInChunk = (worldHeight / 5) * 9 - 1;
+
+            var relX = (count % 3) * 4 + 3;
+            var relZ = ((count / 3) % 3) * 4 + 3;
+
+            int x = -(level.getWorldBorder().getAbsoluteMaxSize() + 16) + ((count / maxInChunk) * 16);
+            int y = (((count / 9) * 5) % worldHeight) + level.getMinY();
+            int z = -(level.getWorldBorder().getAbsoluteMaxSize() + 16);
 
             level.setChunkForced(x / 16, z / 16, true);
 
-            var pos = new BlockPos(x, y, z);
+            var pos = new BlockPos(x + relX, y, z + relZ);
             data.virtualized.add(pos);
 
-            for(int xD=-8;xD<5;xD++) {
-                for(int yD=-5;yD<5;yD++) {
-                    for(int zD=-5;zD<5;zD++) {
+            for(int xD=-2;xD<3;xD++) {
+                for(int yD=-2;yD<3;yD++) {
+                    for(int zD=-2;zD<3;zD++) {
                         var posD = new BlockPos(
                                 xD + pos.getX(), yD + pos.getY(), zD + pos.getZ()
                         );
 
-                        if(xD == -8 || xD == 4 || yD == -5 || yD == 4 || zD == -5 || zD == 4) {
+                        if(xD == -2 || xD == 2 || yD == -2 || yD == 2 || zD == -2 || zD == 2) {
                             level.setBlock(
                                     posD,
                                     Blocks.BEDROCK.defaultBlockState(),
-                                    Block.UPDATE_NONE
+                                    Block.UPDATE_ALL
                             );
                         } else {
                             level.setBlock(posD, Blocks.AIR.defaultBlockState(), Block.UPDATE_NONE);

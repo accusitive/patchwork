@@ -21,10 +21,10 @@ public class Many extends Renderable {
         List<Layout> c = new ArrayList<>();
 
         for (var e : this.elements) {
-            var l = e.extractLayout(x, y);
+            var l = e.extractLayout(0, 0);
 
-            w = Math.max(w, l.x() + l.width() - x);
-            h = Math.max(h, l.y() + l.height() - y);
+            w = Math.max(w, l.x() + l.width());
+            h = Math.max(h, l.y() + l.height());
 
             c.add(l);
         }

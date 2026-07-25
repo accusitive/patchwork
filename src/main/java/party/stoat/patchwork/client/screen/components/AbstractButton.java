@@ -28,7 +28,7 @@ public abstract class AbstractButton extends Renderable {
     }
 
     @Override
-    public boolean onMouseDown(int x, int y, EditorScreen.EditorState state) {
+    public boolean onMouseDown(double x, double y, EditorScreen.EditorState state) {
         this.onClick.handle(this, state);
 
         return true;

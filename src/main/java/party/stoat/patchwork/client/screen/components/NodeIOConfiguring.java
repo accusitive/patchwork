@@ -58,13 +58,10 @@ public class NodeIOConfiguring extends Renderable {
         Layout dirLayout;
         Layout removeLayout;
 
-        int w = this.display.editBox.getInnerWidth() + 4 + this.typeSelector.width + this.directionSelector.width + this.remove.width;
-
-        dirLayout = this.directionSelector.extractLayout(x + this.typeSelector.width, y);
-        removeLayout = this.remove.extractLayout(x + this.typeSelector.width + this.directionSelector.width, y);
-        displayLayout = display.extractLayout(x + this.typeSelector.width + this.directionSelector.width + this.remove.width, y);
-
-        var l = this.typeSelector.extractLayout(x, y);
+        var l = this.typeSelector.extractLayout(0, 0);
+        dirLayout = this.directionSelector.extractLayout(l.width(), 0);
+        removeLayout = this.remove.extractLayout(dirLayout.x() + dirLayout.width(), 0);
+        displayLayout = display.extractLayout(40, 0);
 
         return new Layout(x, y, 180, EditorScreen.FONT.lineHeight, this, List.of(displayLayout, l, dirLayout, removeLayout, removeLayout), this.disabled);
     }

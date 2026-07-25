@@ -31,11 +31,11 @@ public class NodeIO extends Renderable {
         int w = EditorScreen.FONT.width(this.display.content) + 4;
 
         if (this.rightAlign) {
-            displayLayout = display.extractLayout(x, y);
-            portLayout = port.extractLayout(x + w, y + 2);
+            displayLayout = display.extractLayout(0, 0);
+            portLayout = port.extractLayout(w, 2);
         } else {
-            displayLayout = display.extractLayout(x + 8, y);
-            portLayout = port.extractLayout(x, y + 2);
+            displayLayout = display.extractLayout(8, 0);
+            portLayout = port.extractLayout(0, 2);
         }
 
         return new Layout(x, y, w + 4, EditorScreen.FONT.lineHeight, this, List.of(displayLayout, portLayout), this.disabled);

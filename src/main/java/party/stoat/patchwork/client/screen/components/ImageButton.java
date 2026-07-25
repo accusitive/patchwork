@@ -34,15 +34,15 @@ public class ImageButton extends AbstractButton {
 
     @Override
     public void paint(GuiGraphicsExtractor g, Layout l) {
-        g.blit(this.image, l.x() + this.paddingX, l.y() + this.paddingY, l.x() + this.width + this.paddingX, l.y() + this.height + this.paddingY, 0.0f, 1.0f, 0.0f, 1.0f);
+        g.blit(this.image, this.paddingX, this.paddingY, this.width + this.paddingX, this.height + this.paddingY, 0.0f, 1.0f, 0.0f, 1.0f);
 
         if(this.highlight) {
-            g.fill(l.x() + this.paddingX + 1, l.y() + this.paddingY + 1, l.x() + this.width + this.paddingX - 1, l.y() + this.height + this.paddingY - 1, 0x22ffffff);
+            g.fill(this.paddingX + 1, this.paddingY + 1, this.width + this.paddingX - 1, this.height + this.paddingY - 1, 0x22ffffff);
         }
     }
 
     @Override
-    public void onMouseMove(int x, int y, EditorScreen.EditorState state) {
+    public void onMouseMove(double x, double y, EditorScreen.EditorState state) {
         if(this.layoutCache == null) return;
         this.highlight = x >= 0 && x <= this.layoutCache.width() && y >= 0 && y <= this.layoutCache.height();
     }
@@ -51,7 +51,7 @@ public class ImageButton extends AbstractButton {
     protected Layout extractInnerLayout(int x, int y) {
         if(this.text != null) {
             this.text.extractLayout(0, 0);
-            var textLayout = this.text.extractLayout(x + (this.width - text.layoutCache.width()) / 2, y + (this.height - text.layoutCache.height()) / 2);
+            var textLayout = this.text.extractLayout((this.width - text.layoutCache.width()) / 2, (this.height - text.layoutCache.height()) / 2);
             return new Layout(x, y, this.width + (this.paddingX * 2), this.height + (this.paddingY * 2), this, List.of(textLayout), false);
         }
 

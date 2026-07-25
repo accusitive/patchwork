@@ -27,11 +27,11 @@ public class Dropdown extends Renderable {
 
         @Override
         protected Layout extractInnerLayout(int x, int y) {
-            return new Layout(x, y, Dropdown.this.width, EditorScreen.FONT.lineHeight + 4, this, List.of(Dropdown.this.title.extractInnerLayout(x + 2, y + 2)), false);
+            return new Layout(x, y, Dropdown.this.width, EditorScreen.FONT.lineHeight + 4, this, List.of(Dropdown.this.title.extractInnerLayout(2, 2)), false);
         }
 
         @Override
-        public boolean onMouseDown(int x, int y, EditorScreen.EditorState state) {
+        public boolean onMouseDown(double x, double y, EditorScreen.EditorState state) {
             Dropdown.this.open = !Dropdown.this.open;
 
             if(Dropdown.this.open) {
@@ -46,12 +46,12 @@ public class Dropdown extends Renderable {
 
         @Override
         public void paint(GuiGraphicsExtractor g, Layout l) {
-            g.fill(l.x(), l.y(), l.x() + l.width(), l.y() + l.height(), ARGB.color(100, 100, 100, 100));
+            g.fill(0, 0, l.width(), l.height(), ARGB.color(100, 100, 100, 100));
         }
     }
 
     @Override
-    public boolean onMouseDown(int x, int y, EditorScreen.EditorState state) {
+    public boolean onMouseDown(double x, double y, EditorScreen.EditorState state) {
         return false;
     }
 
@@ -62,7 +62,7 @@ public class Dropdown extends Renderable {
         this.title = new Text("> " + title, 0xffffffff);
         this.list = new VerticalList<>(elements, 4, false, true);
         this.list.width = this.width;
-        this.scissor = new ScissorNode(this.list, false);
+        this.scissor = new ScissorNode(this.list, false, false);
         this.scissor.offsetY = this.header.height + 2;
     }
 
@@ -75,7 +75,7 @@ public class Dropdown extends Renderable {
         if(!this.open) {
             return this.header.extractLayout(x, y);
         } else {
-            var scissorLayout = this.scissor.extractLayout(x, y + this.header.height + 2);
+            var scissorLayout = this.scissor.extractLayout(0, this.header.height + 2);
             var listHeight = scissorLayout.height();
 
             long currentTime = System.nanoTime() / 1000000;
@@ -83,11 +83,11 @@ public class Dropdown extends Renderable {
             d = 1.0f - (float) ease(d);
 
             this.scissor.innerOffsetY = -(int) (d * ((float) listHeight));
-            scissorLayout = this.scissor.extractLayout(x, y);
+            scissorLayout = this.scissor.extractLayout(0, 0);
 
             int partialHeight = (int) (((float) scissorLayout.height()) * (1.0 - d)) + 2;
 
-            return new Layout(x, y, this.width, this.header.height + partialHeight, this, List.of(this.header.extractLayout(x, y), scissorLayout), false);
+            return new Layout(x, y, this.width, this.header.height + partialHeight, this, List.of(this.header.extractLayout(0, 0), scissorLayout), false);
         }
     }
 }

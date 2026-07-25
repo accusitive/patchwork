@@ -7,6 +7,7 @@ import mekanism.api.chemical.ChemicalResource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
+import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.transfer.ResourceHandler;
 import net.neoforged.neoforge.transfer.energy.EnergyHandler;
@@ -16,6 +17,7 @@ import net.neoforged.neoforge.transfer.transaction.Transaction;
 import net.neoforged.neoforge.transfer.transaction.TransactionContext;
 import org.jspecify.annotations.Nullable;
 import party.stoat.patchwork.Patchwork;
+import party.stoat.patchwork.compat.MekanismConfigurator;
 import party.stoat.patchwork.patchgraph.*;
 import party.stoat.patchwork.block.sf_controller.SFControllerBlockEntity;
 
@@ -74,6 +76,8 @@ public class VirtualizedBlockNode extends Node {
 
             switch(port.d().d()) {
                 case Chemical -> {
+                    if(!ModList.get().isLoaded("mekanism")) continue;
+
                     var storage = level.getCapability(mekanism.common.capabilities.Capabilities.CHEMICAL.block(), this.proxyPos, port.direction().orElse(null));
                     var foreignStorage = connectedNode.getChemicalHandler(level, foreignPort, patchInstance);
 

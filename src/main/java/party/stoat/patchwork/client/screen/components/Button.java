@@ -30,13 +30,13 @@ public class Button extends AbstractButton {
 
     @Override
     public void paint(GuiGraphicsExtractor g, Layout l) {
-        g.fill(l.x(), l.y(), l.x() + l.width(), l.y() + l.height(), this.highlight ? this.highlightedColor : this.backgroundColor);
+        g.fill(0, 0, l.width(), l.height(), this.highlight ? this.highlightedColor : this.backgroundColor);
     }
 
     @Override
     protected Layout extractInnerLayout(int x, int y) {
         this.text.extractLayout(0, 0);
-        var textLayout = this.text.extractLayout(x + (this.width - text.layoutCache.width()) / 2, y + (this.height - text.layoutCache.height()) / 2);
+        var textLayout = this.text.extractLayout((this.width - text.layoutCache.width()) / 2, (this.height - text.layoutCache.height()) / 2);
 
         return new Layout(x, y, this.width, this.height, this, List.of(textLayout), false);
     }

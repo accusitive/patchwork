@@ -35,24 +35,24 @@ public class TextInput extends Renderable {
 
     @Override
     public void paint(GuiGraphicsExtractor g, Layout l) {
-        this.editBox.setX(l.x());
-        this.editBox.setY(l.y());
+//        this.editBox.setX(l.x());
+//        this.editBox.setY(l.y());
 
 
-        g.fill(l.x(), l.y(), l.x() + l.width(), l.y() + l.height(), this.highlight ? this.highlightedColor : this.backgroundColor);
+        g.fill(0, 0, l.width(), l.height(), this.highlight ? this.highlightedColor : this.backgroundColor);
 //        this.editBox.setValue("yuuup");
         this.editBox.extractWidgetRenderState(g, 0, 0, 1.0f);
     }
 
     @Override
-    public boolean onMouseDown(int x, int y, EditorScreen.EditorState state) {
+    public boolean onMouseDown(double x, double y, EditorScreen.EditorState state) {
         this.editBox.setFocused(true);
 
         return true;
     }
 
     @Override
-    public void onMouseDownGlobal(int x, int y, EditorScreen.EditorState state) {
+    public void onMouseDownGlobal(double x, double y, EditorScreen.EditorState state) {
         if(this.layoutCache != null) {
             this.editBox.setFocused(this.layoutCache.contains(x, y));
         }
@@ -82,6 +82,9 @@ public class TextInput extends Renderable {
 
     @Override
     protected Layout extractInnerLayout(int x, int y) {
-        return new Layout(x, y, this.width, this.height, this, List.of(), false);
+        this.editBox.setX(x);
+        this.editBox.setY(y);
+
+        return new Layout(x, y, this.width + x, this.height + y, this, List.of(), false);
     }
 }
