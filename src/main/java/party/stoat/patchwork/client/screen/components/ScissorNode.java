@@ -66,6 +66,6 @@ public class ScissorNode extends Renderable {
     protected Layout extractInnerLayout(int x, int y) {
         var childLayout = child.extractLayout(innerOffsetX, innerOffsetY);
 
-        return new Layout(x, y, (width != 0 ? width : childLayout.width()), (height != 0 ? height : childLayout.height()), this, List.of(childLayout), false, true, (float) this.scale);
+        return new Layout((int) (x / this.scale), (int) (y / this.scale), (int) ((width != 0 ? width : childLayout.width()) / this.scale), (int) ((height != 0 ? height : childLayout.height()) / this.scale), this, List.of(childLayout), false, true, (float) this.scale);
     }
 }

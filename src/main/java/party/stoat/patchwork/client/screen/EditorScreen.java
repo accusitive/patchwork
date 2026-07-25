@@ -484,26 +484,6 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
     public void extractRenderState(@NonNull GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
         this.drawEffects(graphics, mouseX, mouseY);
 
-        int gridSize = 15;
-
-        if(this.canvas != null && this.canvas.layoutCache != null) {
-            var cache = this.canvas.layoutCache;
-
-//            graphics.enableScissor(cache.x(), cache.y(), cache.x() + cache.width(), cache.y() + cache.height());
-
-            for(int x=0;x<(cache.width() / gridSize) + 1;x++) {
-                int renderX = (x * gridSize) + cache.x() + (this.canvas.innerOffsetX % gridSize);
-                graphics.verticalLine(renderX, 0, cache.height(), 0x11555555);
-            }
-
-            for(int y=0;y<(cache.height() / gridSize) + 1;y++) {
-                int renderY = (y * gridSize) + cache.y() + (this.canvas.innerOffsetY % gridSize);
-                graphics.horizontalLine(cache.x(), cache.x() + cache.width(), renderY, 0x11555555);
-            }
-
-//            graphics.disableScissor();
-        }
-
         if(this.lastLayout != null) this.lastLayout.paint(graphics);
 
         if(this.root != null) {

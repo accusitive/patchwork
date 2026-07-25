@@ -1,10 +1,32 @@
 package party.stoat.patchwork.client.screen.components;
 
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import party.stoat.patchwork.client.screen.EditorScreen;
 
 public class CanvasNode extends ScissorNode {
     public CanvasNode(Renderable child, boolean draggable, boolean zoomable) {
         super(child, draggable, zoomable);
+    }
+
+    @Override
+    public void paint(GuiGraphicsExtractor g, Layout l) {
+        int gridSize = 15;
+
+        if(this.layoutCache != null) {
+            var cache = this.layoutCache;
+
+            for(int x=0;x<(cache.width() / gridSize) + 1;x++) {
+                int renderX = (int) ((x * gridSize / this.scale) + (this.innerOffsetX / this.scale % gridSize));
+                g.verticalLine(renderX, 0, cache.height(), 0x11555555);
+            }
+
+            for(int y=0;y<(cache.height() / gridSize) + 1;y++) {
+                int renderY = (int) ((y * gridSize / this.scale) + (this.innerOffsetY / this.scale % gridSize));
+                g.horizontalLine(cache.x(), cache.x() + cache.width(), renderY, 0x11555555);
+            }
+        }
+
+        super.paint(g, l);
     }
 
     @Override

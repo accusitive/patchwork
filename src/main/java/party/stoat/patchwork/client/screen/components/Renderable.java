@@ -24,16 +24,16 @@ public abstract class Renderable {
         }
 
         public void paint(GuiGraphicsExtractor g) {
-            if(this.scissor) g.enableScissor(this.x, this.y, this.x + this.width, this.y + this.height);
 //            g.pose().translate(this.x() / this.scale, this.y() / this.scale);
             g.pose().pushMatrix();
             g.pose().scale(this.scale());
             g.pose().translate(this.x, this.y);
+            if(this.scissor) g.enableScissor(0, 0, this.width, this.height);
             this.r.paint(g, this);
             this.children.forEach(c -> c.paint(g));
+            if(this.scissor) g.disableScissor();
             g.pose().popMatrix();
 //            g.pose().popMatrix();
-            if(this.scissor) g.disableScissor();
         }
 
         public void onKeyDown(KeyEvent event) {
