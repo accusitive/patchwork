@@ -36,28 +36,30 @@ public class MultiEnergyHandler implements EnergyHandler {
     public int insert(int amount, @NonNull TransactionContext transaction) {
         if(getHandlers().isEmpty()) return 0;
 
-        var surplus = 0;
+        long surplus = 0;
 
-        var per = amount / getHandlers().size();
+        long per = amount / getHandlers().size();
 
-        var totalInserted = 0;
+        long totalInserted = 0;
 
         for(var handler : getHandlers()) {
-            var inserted = handler.insert(per, transaction);
+            var inserted = handler.insert((int) per, transaction);
             totalInserted += inserted;
             surplus += per - inserted;
         }
 
         surplus += amount - totalInserted;
+        surplus = Math.min(surplus, Integer.MAX_VALUE);
 
         for(var handler : getHandlers()) {
-            var surplusInserted = handler.insert(surplus, transaction);
+            if(surplus < 0) break;
+            var surplusInserted = handler.insert((int) surplus, transaction);
             surplus -= surplusInserted;
             totalInserted += surplusInserted;
             if(surplus == 0) break;
         }
 
-        return totalInserted;
+        return (int) Math.min(totalInserted, Integer.MAX_VALUE);
     }
 
     @Override

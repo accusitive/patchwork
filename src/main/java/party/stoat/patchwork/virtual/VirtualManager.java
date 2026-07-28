@@ -91,6 +91,8 @@ public class VirtualManager {
 //                    useOnContext
 //            ));
 
+            System.out.println(pos.toShortString());
+
             return pos;
         } else return null;
     }

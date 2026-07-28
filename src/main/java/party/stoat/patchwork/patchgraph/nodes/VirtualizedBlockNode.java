@@ -72,6 +72,7 @@ public class VirtualizedBlockNode extends Node {
         for(var connection : outputs) {
             var connectedNode = patchInstance.nodes.get(connection.to());
             var port = descriptor.getPort(connection.keyFrom());
+            if(connectedNode == null) continue;
             var foreignPort = connectedNode.getDescriptor().getPort(connection.keyTo());
 
             switch(port.d().d()) {

@@ -1,5 +1,6 @@
 package party.stoat.patchwork.mixin;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
@@ -24,7 +25,7 @@ public interface ContainerInMachineLevelYupThatsValidYup {
                 cir.setReturnValue(true);
             }
         } else if(blockEntity.getLevel() instanceof LevelVirtualBlockCache cache) {
-            if(cache.patchwork$getCache().containsKey(blockEntity.getBlockPos())) cir.setReturnValue(true);
+            if(cache.patchwork$getCache().containsKey(new BlockPos(blockEntity.getBlockPos().getX() & (~15), blockEntity.getBlockPos().getY() & (~15), blockEntity.getBlockPos().getZ() & (~15)))) cir.setReturnValue(true);
         }
     }
 

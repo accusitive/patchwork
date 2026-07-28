@@ -140,6 +140,9 @@ public class MekanismConfigurator implements StorageConfiguration.BlockConfigura
                         .config(TransmissionType.ITEM)
                         .set(DataType.INPUT, Direction.NORTH)
                         .finish()
+                        .config(TransmissionType.ENERGY)
+                        .set(DataType.INPUT, Direction.DOWN)
+                        .finish()
         );
 
         descriptorProvider.put(
@@ -149,7 +152,7 @@ public class MekanismConfigurator implements StorageConfiguration.BlockConfigura
                         List.of(
                                 new NodeDescriptor.IO("Item In", "itemin", new NodeDescriptor.Data(NodeDescriptor.DataType.Item, false), Direction.NORTH),
                                 new NodeDescriptor.IO("Chemical In", "chemin", new NodeDescriptor.Data(NodeDescriptor.DataType.Chemical, false), Direction.UP),
-                                new NodeDescriptor.IO("Power", "powerin", new NodeDescriptor.Data(NodeDescriptor.DataType.Energy, false), Direction.UP)
+                                new NodeDescriptor.IO("Power", "powerin", new NodeDescriptor.Data(NodeDescriptor.DataType.Energy, false), Direction.DOWN)
                         ),
                         List.of(
                                 new NodeDescriptor.IO("Out", "out", new NodeDescriptor.Data(NodeDescriptor.DataType.Chemical, false), Direction.SOUTH)

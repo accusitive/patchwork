@@ -59,7 +59,7 @@ abstract class AddCachedBlockToClientLevel implements LevelVirtualBlockCache {
         }
 
         var chunk = new VirtualSingleChunk(new ChunkPos(blockPos.getX() / 16, blockPos.getZ() / 16), (Level) (Object) this, blockPos, state, entity);
-        this.patchwork$cachedChunk.put(blockPos, chunk);
+        this.patchwork$cachedChunk.put(new BlockPos(blockPos.getX() & (~15), 0, blockPos.getZ() & (~15)), chunk);
     }
 
     @Inject(method = "getChunk(IILnet/minecraft/world/level/chunk/status/ChunkStatus;Z)Lnet/minecraft/world/level/chunk/ChunkAccess;", at = @At("RETURN"), cancellable = true)
