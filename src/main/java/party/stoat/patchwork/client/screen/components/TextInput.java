@@ -6,6 +6,7 @@ import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.ARGB;
+import org.joml.Matrix3x2f;
 import org.lwjgl.glfw.GLFW;
 import party.stoat.patchwork.client.screen.EditorScreen;
 
@@ -34,10 +35,8 @@ public class TextInput extends Renderable {
     }
 
     @Override
-    public void paint(GuiGraphicsExtractor g, Layout l) {
-//        this.editBox.setX(l.x());
-//        this.editBox.setY(l.y());
-
+    public void paint(GuiGraphicsExtractor g, Layout l, Matrix3x2f mat) {
+        super.paint(g, l, mat);
 
         g.fill(0, 0, l.width(), l.height(), this.highlight ? this.highlightedColor : this.backgroundColor);
 //        this.editBox.setValue("yuuup");

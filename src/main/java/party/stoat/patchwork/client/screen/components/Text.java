@@ -1,6 +1,7 @@
 package party.stoat.patchwork.client.screen.components;
 
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import org.joml.Matrix3x2f;
 import party.stoat.patchwork.client.screen.EditorScreen;
 
 import java.util.List;
@@ -21,8 +22,8 @@ public class    Text extends Renderable {
     }
 
     @Override
-    public void paint(GuiGraphicsExtractor g, Layout l) {
-        super.paint(g, l);
+    public void paint(GuiGraphicsExtractor g, Layout l, Matrix3x2f mat) {
+        super.paint(g, l, mat);
         
         g.text(EditorScreen.FONT, this.content,0, 0, this.color);
     }

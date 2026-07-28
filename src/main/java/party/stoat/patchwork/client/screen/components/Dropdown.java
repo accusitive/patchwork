@@ -2,6 +2,7 @@ package party.stoat.patchwork.client.screen.components;
 
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.util.ARGB;
+import org.joml.Matrix3x2f;
 import party.stoat.patchwork.client.screen.EditorScreen;
 
 import java.util.List;
@@ -45,7 +46,9 @@ public class Dropdown extends Renderable {
         }
 
         @Override
-        public void paint(GuiGraphicsExtractor g, Layout l) {
+        public void paint(GuiGraphicsExtractor g, Layout l, Matrix3x2f mat) {
+            super.paint(g, l, mat);
+
             g.fill(0, 0, l.width(), l.height(), ARGB.color(100, 100, 100, 100));
         }
     }

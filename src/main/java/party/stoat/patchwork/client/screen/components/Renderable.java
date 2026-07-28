@@ -3,6 +3,8 @@ package party.stoat.patchwork.client.screen.components;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
+import org.joml.Matrix3x2f;
+import org.joml.Vector2f;
 import party.stoat.patchwork.client.screen.EditorScreen;
 
 import java.util.List;
@@ -12,6 +14,9 @@ public abstract class Renderable {
     public int offsetY;
 
     public Layout layoutCache;
+
+    public int absX;
+    public int absY;
 
     public record Layout(int x, int y, int width, int height, Renderable r, List<Layout> children, boolean disabled, boolean scissor, float scale) {
 
@@ -27,9 +32,9 @@ public abstract class Renderable {
 //            g.pose().translate(this.x() / this.scale, this.y() / this.scale);
             g.pose().pushMatrix();
             g.pose().scale(this.scale());
-            g.pose().translate(this.x, this.y);
+            var mat = g.pose().translate(this.x, this.y);
             if(this.scissor) g.enableScissor(0, 0, this.width, this.height);
-            this.r.paint(g, this);
+            this.r.paint(g, this, mat);
             this.children.forEach(c -> c.paint(g));
             if(this.scissor) g.disableScissor();
             g.pose().popMatrix();
@@ -132,7 +137,10 @@ public abstract class Renderable {
         return false;
     }
 
-    public void paint(GuiGraphicsExtractor g, Layout l) {
+    public void paint(GuiGraphicsExtractor g, Layout l, Matrix3x2f mat) {
+        var point = mat.transformPosition(new Vector2f(this.offsetX, this.offsetY));
+        this.absX = (int) point.x;
+        this.absY = (int) point.y;
     }
 
     public Layout extractLayout(int x, int y) {

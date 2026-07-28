@@ -17,6 +17,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
+import org.joml.Matrix3x2f;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
@@ -224,7 +225,8 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
         }
 
         @Override
-        public void paint(GuiGraphicsExtractor g, Layout l) {
+        public void paint(GuiGraphicsExtractor g, Layout l, Matrix3x2f mat) {
+            super.paint(g, l, mat);
             g.item(stack, 0, 0);
         }
 
@@ -404,7 +406,7 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
         List<Integer> colors = new ArrayList<>();
 
         if(this.state.draggingFrom != null) {
-            var from = new Vec2(this.state.draggingFrom.layoutCache.x() + 2, this.state.draggingFrom.layoutCache.y() + 2);
+            var from = new Vec2(this.state.draggingFrom.absX + 2, this.state.draggingFrom.absY + 2);
             var to = new Vec2(mouseX - 2, mouseY - 2);
 
             connections.add(new Vec2[] { from, to });
@@ -421,12 +423,9 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
 
             if(toPort == null || fromPort == null) continue;
 
-
-            if(fromPort.layoutCache == null || toPort.layoutCache == null) continue;
-
             connections.add(new Vec2[] {
-                    new Vec2(fromPort.port.layoutCache.x(), fromPort.port.layoutCache.y() + 2),
-                    new Vec2(toPort.port.layoutCache.x(), toPort.port.layoutCache.y() + 2),
+                    new Vec2(fromPort.port.absX, fromPort.port.absY + 2),
+                    new Vec2(toPort.port.absX, toPort.port.absY + 2),
             });
             colors.add(fromPort.port.type.color);
         }

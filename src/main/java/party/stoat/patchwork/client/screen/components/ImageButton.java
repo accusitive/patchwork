@@ -2,6 +2,7 @@ package party.stoat.patchwork.client.screen.components;
 
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.resources.Identifier;
+import org.joml.Matrix3x2f;
 import party.stoat.patchwork.Patchwork;
 import party.stoat.patchwork.client.screen.EditorScreen;
 
@@ -33,7 +34,9 @@ public class ImageButton extends AbstractButton {
     }
 
     @Override
-    public void paint(GuiGraphicsExtractor g, Layout l) {
+    public void paint(GuiGraphicsExtractor g, Layout l, Matrix3x2f mat) {
+        super.paint(g, l, mat);
+
         g.blit(this.image, this.paddingX, this.paddingY, this.width + this.paddingX, this.height + this.paddingY, 0.0f, 1.0f, 0.0f, 1.0f);
 
         if(this.highlight) {

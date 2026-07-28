@@ -1,6 +1,7 @@
 package party.stoat.patchwork.client.screen.components;
 
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import org.joml.Matrix3x2f;
 import party.stoat.patchwork.client.screen.EditorScreen;
 
 public class CanvasNode extends ScissorNode {
@@ -9,7 +10,9 @@ public class CanvasNode extends ScissorNode {
     }
 
     @Override
-    public void paint(GuiGraphicsExtractor g, Layout l) {
+    public void paint(GuiGraphicsExtractor g, Layout l, Matrix3x2f mat) {
+        super.paint(g, l, mat);
+
         int gridSize = 15;
 
         if(this.layoutCache != null) {
@@ -25,8 +28,6 @@ public class CanvasNode extends ScissorNode {
                 g.horizontalLine(cache.x(), cache.x() + cache.width(), renderY, 0x11555555);
             }
         }
-
-        super.paint(g, l);
     }
 
     @Override

@@ -2,6 +2,7 @@ package party.stoat.patchwork.client.screen.components;
 
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.util.ARGB;
+import org.joml.Matrix3x2f;
 import party.stoat.patchwork.client.screen.EditorScreen;
 
 import java.util.List;
@@ -39,7 +40,9 @@ public class Scrollable<T extends Renderable> extends Renderable {
     }
 
     @Override
-    public void paint(GuiGraphicsExtractor g, Layout l) {
+    public void paint(GuiGraphicsExtractor g, Layout l, Matrix3x2f mat) {
+        super.paint(g, l, mat);
+
         int maxScroll = -Math.max(0, this.child.layoutCache.height() - this.height);
 
         float scrollbarValue = (float) ease(((double) Math.clamp(System.currentTimeMillis() - this.lastScroll - 1000, 0, 500)) / 500.0d);

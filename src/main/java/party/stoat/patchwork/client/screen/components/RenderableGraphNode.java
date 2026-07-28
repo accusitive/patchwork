@@ -13,6 +13,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec2;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
+import org.joml.Matrix3x2f;
 import party.stoat.patchwork.Patchwork;
 import party.stoat.patchwork.client.screen.EditorScreen;
 import party.stoat.patchwork.network.EjectVirtualizedMachineServerboundPayload;
@@ -163,7 +164,9 @@ public class RenderableGraphNode extends Renderable {
     }
 
     @Override
-    public void paint(GuiGraphicsExtractor g, Layout l) {
+    public void paint(GuiGraphicsExtractor g, Layout l, Matrix3x2f mat) {
+        super.paint(g, l, mat);
+
         var borderFill = this.highlighted ? ARGB.color(255, 200, 200, 200) : ARGB.color(255, 60, 60, 60);
 
         g.fill(0, 0, l.width(), l.height(), borderFill);
