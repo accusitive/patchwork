@@ -127,7 +127,7 @@ public class SFControllerBlockEntity extends BlockEntity implements MenuProvider
             for(var sfNode : sfNetworkGraph.getNodes().toList()) {
                 if(sfNode.getBlockState().getBlock() instanceof SFEnergyHandler energyHandler) {
                     var desired = energyHandler.desiredAmount();
-                    var extractedAmount = entity.selfStorage.receiveEnergy(desired, false);
+                    var extractedAmount = entity.selfStorage.extractEnergy(desired, false);
 
                     if(extractedAmount < desired) break;
 
