@@ -417,14 +417,4 @@ public class RenderableGraphNode extends Renderable {
 
         return new Layout(dX, dY, dZ, w, h, this, childLayouts, false);
     }
-
-    @Override
-    public void setFocused(boolean b) {
-
-    }
-
-    @Override
-    public boolean isFocused() {
-        return false;
-    }
 }

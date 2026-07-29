@@ -243,16 +243,6 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> impl
         protected Layout extractInnerLayout(int x, int y, int z) {
             return new Layout(x, y, z, 16, 16, this, List.of(), false);
         }
-
-        @Override
-        public void setFocused(boolean b) {
-
-        }
-
-        @Override
-        public boolean isFocused() {
-            return false;
-        }
     }
 
     @Override

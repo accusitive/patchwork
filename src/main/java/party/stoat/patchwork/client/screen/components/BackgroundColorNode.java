@@ -15,8 +15,8 @@ public class BackgroundColorNode<T extends Renderable> extends Renderable {
     }
 
     @Override
-    public void paint(GuiGraphics g, Layout l, Matrix3x2f mat) {
-        super.paint(g, l, mat);
+    public void paint(GuiGraphics g, Layout l) {
+        super.paint(g, l);
 
         g.fill(0, 0, l.width(), l.height(), this.color);
     }
