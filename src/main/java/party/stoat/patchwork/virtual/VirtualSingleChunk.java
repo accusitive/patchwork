@@ -11,6 +11,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.material.Fluid;
@@ -18,9 +19,9 @@ import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.ticks.ScheduledTick;
 import net.minecraft.world.ticks.TickContainerAccess;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,7 +40,7 @@ public class VirtualSingleChunk extends LevelChunk {
     }
 
     @Override
-    public @Nullable BlockState setBlockState(@NonNull BlockPos blockPos, @NonNull BlockState blockState, @Block.UpdateFlags int i) {
+    public @Nullable BlockState setBlockState(@NonNull BlockPos blockPos, @NonNull BlockState blockState, boolean bool) {
         if(blockPos != this.blockPos) return null;
 
         this.theState = blockState;
@@ -111,11 +112,6 @@ public class VirtualSingleChunk extends LevelChunk {
                 return 0;
             }
         };
-    }
-
-    @Override
-    public @NonNull PackedTicks getTicksForSerialization(long l) {
-        return new PackedTicks(List.of(), List.of());
     }
 
     @Override

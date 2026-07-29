@@ -18,17 +18,18 @@ import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.redstone.Orientation;import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import org.jspecify.annotations.NonNull;import org.jspecify.annotations.Nullable;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import party.stoat.patchwork.Patchwork;
 import party.stoat.patchwork.block.SFNetworkConnectable;
 import party.stoat.patchwork.graphlib.SFBehavior;
 import party.stoat.patchwork.graphlib.SFInterfaceNode;
 
+import javax.annotation.Nullable;
 import java.util.List;
 
 public class SFInterface extends DirectionalBlock implements SFNetworkConnectable {
@@ -50,7 +51,7 @@ public class SFInterface extends DirectionalBlock implements SFNetworkConnectabl
     }
 
     @Override
-    protected void updateIndirectNeighbourShapes(BlockState state, LevelAccessor level, BlockPos pos, @UpdateFlags int updateFlags, int updateLimit) {
+    protected void updateIndirectNeighbourShapes(BlockState state, LevelAccessor level, BlockPos pos, int updateFlags, int updateLimit) {
         if(level instanceof ServerLevel serverLevel) {
             Patchwork.UNIVERSE.getGraphWorld(serverLevel).updateNodes(pos);
         }
@@ -124,7 +125,7 @@ public class SFInterface extends DirectionalBlock implements SFNetworkConnectabl
     }
 
     @Override
-    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, @Nullable Orientation orientation, boolean movedByPiston) {
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos pos1, boolean movedByPiston) {
         level.setBlockAndUpdate(pos, this.findConnections(level, state, pos));
     }
 

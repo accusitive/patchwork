@@ -1,39 +1,31 @@
 package party.stoat.patchwork.block.sf_controller;
 
-import net.minecraft.server.level.ServerLevel;
-import net.neoforged.neoforge.transfer.energy.EnergyHandler;
-import net.neoforged.neoforge.transfer.transaction.TransactionContext;
-import org.jspecify.annotations.NonNull;
-import party.stoat.patchwork.patchgraph.StorageConfiguration;
-import party.stoat.patchwork.patchgraph.nodes.SFSystemPowerNode;
+import net.neoforged.neoforge.energy.EnergyStorage;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class MultiEnergyHandler implements EnergyHandler {
+public class MultiEnergyHandler {
 
-    public List<EnergyHandler> handlers;
+    public List<EnergyStorage> handlers;
 
-    public MultiEnergyHandler(List<EnergyHandler> handlers) {
+    public MultiEnergyHandler(List<EnergyStorage> handlers) {
         this.handlers = handlers;
     }
 
-    public List<EnergyHandler> getHandlers() {
+    public List<EnergyStorage> getHandlers() {
         return this.handlers;
     }
 
-    @Override
     public long getAmountAsLong() {
-        return getHandlers().stream().mapToLong(EnergyHandler::getAmountAsLong).sum();
+        return getHandlers().stream().mapToLong(EnergyStorage::getEnergyStored).sum();
     }
 
-    @Override
     public long getCapacityAsLong() {
-        return getHandlers().stream().mapToLong(EnergyHandler::getCapacityAsLong).sum();
+        return getHandlers().stream().mapToLong(EnergyStorage::getMaxEnergyStored).sum();
     }
 
-    @Override
-    public int insert(int amount, @NonNull TransactionContext transaction) {
+    public int insert(int amount, boolean simulate) {
         if(getHandlers().isEmpty()) return 0;
 
         long surplus = 0;
@@ -43,7 +35,7 @@ public class MultiEnergyHandler implements EnergyHandler {
         long totalInserted = 0;
 
         for(var handler : getHandlers()) {
-            var inserted = handler.insert((int) per, transaction);
+            var inserted = handler.receiveEnergy((int)per, simulate);
             totalInserted += inserted;
             surplus += per - inserted;
         }
@@ -53,7 +45,7 @@ public class MultiEnergyHandler implements EnergyHandler {
 
         for(var handler : getHandlers()) {
             if(surplus < 0) break;
-            var surplusInserted = handler.insert((int) surplus, transaction);
+            var surplusInserted = handler.receiveEnergy((int)surplus, simulate);
             surplus -= surplusInserted;
             totalInserted += surplusInserted;
             if(surplus == 0) break;
@@ -62,8 +54,7 @@ public class MultiEnergyHandler implements EnergyHandler {
         return (int) Math.min(totalInserted, Integer.MAX_VALUE);
     }
 
-    @Override
-    public int extract(int amount, @NonNull TransactionContext transaction) {
+    public int extract(int amount, boolean simulate) {
         return 0;
     }
 }

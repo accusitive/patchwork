@@ -1,26 +1,22 @@
 package party.stoat.patchwork.patchgraph.nodes;
 
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.neoforged.neoforge.transfer.ResourceHandler;
-import net.neoforged.neoforge.transfer.item.ItemResource;
-import net.neoforged.neoforge.transfer.resource.Resource;
-import net.neoforged.neoforge.transfer.transaction.TransactionContext;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
+import net.neoforged.neoforge.items.IItemHandler;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import party.stoat.patchwork.Patchwork;
 import party.stoat.patchwork.patchgraph.Node;
 import party.stoat.patchwork.patchgraph.NodeDescriptor;
-import party.stoat.patchwork.patchgraph.PatchGraph;
 import party.stoat.patchwork.patchgraph.PatchInstance;
 
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
 public class SplitterNode extends Node {
 
-    public static final Identifier IDENTIFIER = Identifier.fromNamespaceAndPath(Patchwork.MOD_ID, "splitter");
+    public static final ResourceLocation IDENTIFIER = ResourceLocation.fromNamespaceAndPath(Patchwork.MOD_ID, "splitter");
 
     public SplitterNode(UUID uuid, NodeDescriptor descriptor) {
         super(uuid, descriptor);
@@ -92,7 +88,7 @@ public class SplitterNode extends Node {
         }
 
         @Override
-        public int insert(int index, @NonNull T resource, int amount, @NonNull TransactionContext transaction) {
+        public int insert(int index, @NonNull T resource, int amount, boolean simulate) {
             if(handlers.isEmpty()) return 0;
             var i = 0;
 
@@ -107,13 +103,13 @@ public class SplitterNode extends Node {
         }
 
         @Override
-        public int extract(int index, @NonNull T resource, int amount, @NonNull TransactionContext transaction) {
+        public int extract(int index, @NonNull T resource, int amount, boolean simulate) {
             return 0;
         }
     }
 
     @Override
-    public @Nullable ResourceHandler<ItemResource> getItemHandler(ServerLevel level, NodeDescriptor.IO p_, PatchInstance patch) {
+    public @Nullable IItemHandler getItemHandler(ServerLevel level, NodeDescriptor.IO p_, PatchInstance patch) {
         var outputs = this.getOutputConnections(patch.graph);
 
         return new SplitterResourceHandler<>(
@@ -128,7 +124,7 @@ public class SplitterNode extends Node {
     }
 
     @Override
-    public Identifier getIdentifier() {
+    public ResourceLocation getIdentifier() {
         return null;
     }
 

@@ -14,17 +14,16 @@ import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.redstone.Orientation;
 import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import party.stoat.patchwork.Patchwork;
 import party.stoat.patchwork.block.SFNetworkConnectable;
 import party.stoat.patchwork.graphlib.SFCableNode;
 
+import javax.annotation.Nullable;
 import java.util.List;
 
 public class SFCable extends Block implements SFNetworkConnectable {
@@ -116,7 +115,7 @@ public class SFCable extends Block implements SFNetworkConnectable {
     }
 
     @Override
-    protected void neighborChanged(@NonNull BlockState state, Level level, @NonNull BlockPos pos, @NonNull Block block, @Nullable Orientation orientation, boolean movedByPiston) {
+    protected void neighborChanged(@NonNull BlockState state, Level level, @NonNull BlockPos pos, @NonNull Block block, @NonNull BlockPos pos1, boolean movedByPiston) {
         level.setBlockAndUpdate(pos, this.findConnections(level, state, pos));
     }
 

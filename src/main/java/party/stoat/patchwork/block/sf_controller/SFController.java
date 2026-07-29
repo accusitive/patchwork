@@ -15,14 +15,13 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.redstone.Orientation;
-import org.jspecify.annotations.Nullable;
 import party.stoat.patchwork.MyBlocks;
 import party.stoat.patchwork.Patchwork;
 import party.stoat.patchwork.block.SFNetworkConnectable;
 import party.stoat.patchwork.graphlib.SFCableNode;
 import party.stoat.patchwork.graphlib.SFControllerNode;
 
+import javax.annotation.Nullable;
 import java.util.List;
 
 public class SFController extends BaseEntityBlock implements SFNetworkConnectable {
@@ -49,8 +48,8 @@ public class SFController extends BaseEntityBlock implements SFNetworkConnectabl
     }
 
     @Override
-    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, @Nullable Orientation orientation, boolean movedByPiston) {
-        super.neighborChanged(state, level, pos, block, orientation, movedByPiston);
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos pos1, boolean movedByPiston) {
+        super.neighborChanged(state, level, pos, block, pos1, movedByPiston);
 
         if(level instanceof ServerLevel serverLevel) {
             Patchwork.UNIVERSE.getGraphWorld(serverLevel).updateNodes(pos);
@@ -58,7 +57,7 @@ public class SFController extends BaseEntityBlock implements SFNetworkConnectabl
     }
 
     @Override
-    protected void updateIndirectNeighbourShapes(BlockState state, LevelAccessor level, BlockPos pos, @UpdateFlags int updateFlags, int updateLimit) {
+    protected void updateIndirectNeighbourShapes(BlockState state, LevelAccessor level, BlockPos pos, int updateFlags, int updateLimit) {
         if(level instanceof ServerLevel serverLevel) {
             Patchwork.UNIVERSE.getGraphWorld(serverLevel).updateNodes(pos);
         }

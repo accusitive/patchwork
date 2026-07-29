@@ -3,7 +3,9 @@ package party.stoat.patchwork.block.sf_controller;
 import com.kneelawk.graphlib.api.graph.BlockGraph;
 import com.kneelawk.graphlib.api.util.NodePos;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -20,22 +22,17 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.ticks.ContainerSingleItem;
-import net.neoforged.neoforge.transfer.energy.EnergyHandler;
-import net.neoforged.neoforge.transfer.energy.SimpleEnergyHandler;
-import net.neoforged.neoforge.transfer.transaction.Transaction;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
+import net.neoforged.neoforge.energy.EnergyStorage;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import party.stoat.patchwork.MyBlocks;
 import party.stoat.patchwork.Patchwork;
 import party.stoat.patchwork.patchgraph.StorageConfiguration;
-import party.stoat.patchwork.block.SFEnergyHandler;
 import party.stoat.patchwork.patchgraph.nodes.SFSystemPowerNode;
 import party.stoat.patchwork.patchgraph.nodes.VirtualizedBlockNode;
 import party.stoat.patchwork.graphlib.SFControllerNode;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -46,7 +43,7 @@ public class SFControllerBlockEntity extends BlockEntity implements MenuProvider
     private ItemStack theItem = ItemStack.EMPTY;
     private List<ItemStack> spawnIn = new ArrayList<>();
 
-    public SimpleEnergyHandler selfStorage = new SimpleEnergyHandler(10000, 1000, 10);
+    public EnergyStorage selfStorage = new EnergyStorage(10000, 1000, 10);
     public MultiEnergyHandler handler = new MultiEnergyHandler(List.of());
 
     public HashSet<BlockPos> loaded = new HashSet<>();
@@ -73,7 +70,7 @@ public class SFControllerBlockEntity extends BlockEntity implements MenuProvider
 
         if(sfNetworkGraph == null) return;
 
-        if(entity.selfStorage.getAmountAsLong() > 0) {
+        if(entity.selfStorage.getEnergyStored() > 0) {
             if(!blockState.getValue(SFController.POWERED)) {
                 level.setBlockAndUpdate(blockPos, blockState.setValue(SFController.POWERED, true));
             }
@@ -109,7 +106,7 @@ public class SFControllerBlockEntity extends BlockEntity implements MenuProvider
 
         //Find energy handlers
 
-        List<EnergyHandler> energyHandlers = new ArrayList<>();
+        List<EnergyStorage> energyHandlers = new ArrayList<>();
         energyHandlers.add(entity.selfStorage);
 
         for(var config : configs) {
@@ -215,20 +212,21 @@ public class SFControllerBlockEntity extends BlockEntity implements MenuProvider
     }
 
     @Override
-    protected void saveAdditional(@NonNull ValueOutput output) {
-        ContainerHelper.saveAllItems(output, NonNullList.of(theItem));
-        output.putInt("energy", this.selfStorage.getAmountAsInt());
+    protected void saveAdditional(@NonNull CompoundTag output, HolderLookup.Provider provider) {
+        ContainerHelper.saveAllItems(output, NonNullList.of(theItem), provider);
+        output.putInt("energy", this.selfStorage.getEnergyStored());
 
-        super.saveAdditional(output);
+        super.saveAdditional(output, provider);
     }
 
     @Override
-    protected void loadAdditional(@NonNull ValueInput input) {
-        ContainerHelper.loadAllItems(input, NonNullList.of(theItem));
+    protected void loadAdditional(@NonNull CompoundTag input, HolderLookup.Provider provider) {
+        ContainerHelper.loadAllItems(input, NonNullList.of(theItem), provider);
 
+        // energy field is protected, should use deserialize NBT or a subclass?
         input.getInt("energy").ifPresent(e -> this.selfStorage.set(e));
 
-        super.loadAdditional(input);
+        super.loadAdditional(input, provider);
     }
 
     @Override
