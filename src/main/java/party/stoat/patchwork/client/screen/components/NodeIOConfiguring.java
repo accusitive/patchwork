@@ -53,17 +53,17 @@ public class NodeIOConfiguring extends Renderable {
     }
 
     @Override
-    protected Layout extractInnerLayout(int x, int y) {
+    protected Layout extractInnerLayout(int x, int y, int z) {
         Layout displayLayout;
         Layout dirLayout;
         Layout removeLayout;
 
-        var l = this.typeSelector.extractLayout(0, 0);
-        dirLayout = this.directionSelector.extractLayout(l.width(), 0);
-        removeLayout = this.remove.extractLayout(dirLayout.x() + dirLayout.width(), 0);
-        displayLayout = display.extractLayout(40, 0);
+        var l = this.typeSelector.extractLayout(0, 0, 0);
+        dirLayout = this.directionSelector.extractLayout(l.width(), 0, 0);
+        removeLayout = this.remove.extractLayout(dirLayout.x() + dirLayout.width(), 0, 0);
+        displayLayout = display.extractLayout(40, 0, 0);
 
-        return new Layout(x, y, 180, EditorScreen.FONT.lineHeight, this, List.of(displayLayout, l, dirLayout, removeLayout, removeLayout), this.disabled);
+        return new Layout(x, y, z, 180, EditorScreen.FONT.lineHeight, this, List.of(displayLayout, l, dirLayout, removeLayout, removeLayout), this.disabled);
     }
 
 }

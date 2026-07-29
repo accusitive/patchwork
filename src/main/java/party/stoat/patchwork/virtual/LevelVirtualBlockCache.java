@@ -3,7 +3,6 @@ package party.stoat.patchwork.virtual;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.state.BlockState;
-import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Optional;

@@ -5,7 +5,6 @@ import com.kneelawk.graphlib.api.graph.user.BlockNode;
 import com.kneelawk.graphlib.api.graph.user.BlockNodeType;
 import com.kneelawk.graphlib.api.util.HalfLink;
 import com.kneelawk.graphlib.api.wire.FullWireBlockNode;
-import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
 import party.stoat.patchwork.Patchwork;

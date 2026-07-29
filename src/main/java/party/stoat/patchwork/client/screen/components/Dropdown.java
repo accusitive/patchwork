@@ -1,7 +1,7 @@
 package party.stoat.patchwork.client.screen.components;
 
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.util.ARGB;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.util.FastColor;
 import org.joml.Matrix3x2f;
 import party.stoat.patchwork.client.screen.EditorScreen;
 
@@ -27,8 +27,8 @@ public class Dropdown extends Renderable {
         int height = EditorScreen.FONT.lineHeight + 4;
 
         @Override
-        protected Layout extractInnerLayout(int x, int y) {
-            return new Layout(x, y, Dropdown.this.width, EditorScreen.FONT.lineHeight + 4, this, List.of(Dropdown.this.title.extractInnerLayout(2, 2)), false);
+        protected Layout extractInnerLayout(int x, int y, int z) {
+            return new Layout(x, y, z, Dropdown.this.width, EditorScreen.FONT.lineHeight + 4, this, List.of(Dropdown.this.title.extractInnerLayout(2, 2, 0)), false);
         }
 
         @Override
@@ -46,10 +46,10 @@ public class Dropdown extends Renderable {
         }
 
         @Override
-        public void paint(GuiGraphicsExtractor g, Layout l, Matrix3x2f mat) {
-            super.paint(g, l, mat);
+        public void paint(GuiGraphics g, Layout l) {
+            super.paint(g, l);
 
-            g.fill(0, 0, l.width(), l.height(), ARGB.color(100, 100, 100, 100));
+            g.fill(0, 0, l.width(), l.height(), FastColor.ARGB32.color(100, 100, 100, 100));
         }
     }
 
@@ -74,11 +74,11 @@ public class Dropdown extends Renderable {
     }
 
     @Override
-    protected Layout extractInnerLayout(int x, int y) {
+    protected Layout extractInnerLayout(int x, int y, int z) {
         if(!this.open) {
-            return this.header.extractLayout(x, y);
+            return this.header.extractLayout(x, y, z);
         } else {
-            var scissorLayout = this.scissor.extractLayout(0, this.header.height + 2);
+            var scissorLayout = this.scissor.extractLayout(0, this.header.height + 2, 0);
             var listHeight = scissorLayout.height();
 
             long currentTime = System.nanoTime() / 1000000;
@@ -86,11 +86,11 @@ public class Dropdown extends Renderable {
             d = 1.0f - (float) ease(d);
 
             this.scissor.innerOffsetY = -(int) (d * ((float) listHeight));
-            scissorLayout = this.scissor.extractLayout(0, 0);
+            scissorLayout = this.scissor.extractLayout(0, 0, 0);
 
             int partialHeight = (int) (((float) scissorLayout.height()) * (1.0 - d)) + 2;
 
-            return new Layout(x, y, this.width, this.header.height + partialHeight, this, List.of(this.header.extractLayout(0, 0), scissorLayout), false);
+            return new Layout(x, y, z, this.width, this.header.height + partialHeight, this, List.of(this.header.extractLayout(0, 0, 0), scissorLayout), false);
         }
     }
 }

@@ -10,6 +10,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.energy.EnergyStorage;
+import net.neoforged.neoforge.energy.IEnergyStorage;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.items.IItemHandler;
 import party.stoat.patchwork.Patchwork;
@@ -52,7 +53,7 @@ public class VirtualizedBlockNode extends Node {
     }
 
     @Override
-    public @Nullable EnergyStorage getEnergyHandler(ServerLevel level, NodeDescriptor.IO port, PatchInstance graph) {
+    public @Nullable IEnergyStorage getEnergyHandler(ServerLevel level, NodeDescriptor.IO port, PatchInstance graph) {
         if(this.proxyPos == null) return null;
         if(level == null) return null;
         return level.getCapability(Capabilities.EnergyStorage.BLOCK, this.proxyPos, port.direction().orElse(null));

@@ -1,11 +1,9 @@
 package party.stoat.patchwork.client.screen.components;
 
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.input.CharacterEvent;
-import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.ARGB;
+import net.minecraft.util.FastColor;
 import org.joml.Matrix3x2f;
 import org.lwjgl.glfw.GLFW;
 import party.stoat.patchwork.client.screen.EditorScreen;
@@ -18,8 +16,8 @@ public class TextInput extends Renderable {
     public int width;
     public int height;
 
-    public int backgroundColor = ARGB.color(255, 100, 100, 100);
-    public int highlightedColor = ARGB.color(255, 150, 150, 150);
+    public int backgroundColor = FastColor.ARGB32.color(255, 100, 100, 100);
+    public int highlightedColor = FastColor.ARGB32.color(255, 150, 150, 150);
 
     public final EditBox editBox;
 
@@ -35,8 +33,8 @@ public class TextInput extends Renderable {
     }
 
     @Override
-    public void paint(GuiGraphicsExtractor g, Layout l, Matrix3x2f mat) {
-        super.paint(g, l, mat);
+    public void paint(GuiGraphics g, Layout l) {
+        super.paint(g, l);
 
         g.fill(0, 0, l.width(), l.height(), this.highlight ? this.highlightedColor : this.backgroundColor);
 //        this.editBox.setValue("yuuup");
@@ -58,32 +56,33 @@ public class TextInput extends Renderable {
     }
 
     @Override
-    public boolean charTyped(CharacterEvent event, EditorScreen.EditorState state) {
-        return this.editBox.charTyped(event);
+    public boolean charTyped(char c, EditorScreen.EditorState state) {
+        // charTyped(char c, int keyCode)
+        return this.editBox.charTyped(c, state);
     }
 
     @Override
-    public void onKeyDown(KeyEvent event) {
+    public void onKeyDown(int key, int scancode, int mods) {
 //        if(this.highlight) this.editBox.keyPressed(event);
-        if(event.key() == GLFW.GLFW_KEY_ENTER) {
+        if(key == GLFW.GLFW_KEY_ENTER) {
             this.editBox.setFocused(false);
         }
 
         if(this.editBox.isFocused()) {
-            this.editBox.keyPressed(event);
+            this.editBox.keyPressed(key, scancode, mods);
         }
     }
 
     @Override
-    public void onKeyUp(KeyEvent event) {
-        this.editBox.keyPressed(event);
+    public void onKeyUp(int key, int scancode, int mods) {
+        this.editBox.keyPressed(key, scancode, mods);
     }
 
     @Override
-    protected Layout extractInnerLayout(int x, int y) {
+    protected Layout extractInnerLayout(int x, int y, int z) {
         this.editBox.setX(x);
         this.editBox.setY(y);
 
-        return new Layout(x, y, this.width + x, this.height + y, this, List.of(), false);
+        return new Layout(x, y, z, this.width + x, this.height + y, this, List.of(), false);
     }
 }

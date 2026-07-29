@@ -7,7 +7,6 @@ import com.kneelawk.graphlib.api.util.HalfLink;
 import com.kneelawk.graphlib.api.util.NodePos;
 import com.kneelawk.graphlib.api.wire.FullWireBlockNode;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.DirectionalBlock;

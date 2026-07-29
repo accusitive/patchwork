@@ -1,6 +1,6 @@
 package party.stoat.patchwork.patchgraph.nodes;
 
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import party.stoat.patchwork.Patchwork;
 import party.stoat.patchwork.patchgraph.Node;
 import party.stoat.patchwork.patchgraph.NodeDescriptor;
@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public class Nodes {
 
-    public static HashMap<Identifier, NodeConstructor> nodeConstructors = new HashMap<>();
+    public static HashMap<ResourceLocation, NodeConstructor> nodeConstructors = new HashMap<>();
 
     static {
 
@@ -21,7 +21,7 @@ public class Nodes {
     }
 
     public static void register(String identifier, NodeConstructor constructor) {
-        nodeConstructors.put(Identifier.fromNamespaceAndPath(Patchwork.MOD_ID, identifier), constructor);
+        nodeConstructors.put(ResourceLocation.fromNamespaceAndPath(Patchwork.MOD_ID, identifier), constructor);
     }
 
     @FunctionalInterface

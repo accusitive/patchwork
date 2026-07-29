@@ -11,6 +11,7 @@ import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
@@ -23,18 +24,18 @@ public class VirtualManager {
 
     public BlockPos allocate(ServerLevel level, UUID uuid, ItemStack stack) {
         if(stack.getItem() instanceof BlockItem blockItem) {
-            var data = level.getDataStorage().computeIfAbsent(MachineLevelSavedData.ID);
+            var data = level.getDataStorage().computeIfAbsent(new SavedData.Factory<>(MachineLevelSavedData::create, MachineLevelSavedData::load), "machine_count");
 
             int count = data.increment();
 
-            var worldHeight = level.getMaxY() - level.getMinY();
+            var worldHeight = level.getHeight() - level.dimensionType().minY();
             var maxInChunk = (worldHeight / 5) * 9 - 1;
 
             var relX = (count % 3) * 4 + 3;
             var relZ = ((count / 3) % 3) * 4 + 3;
 
             int x = -(level.getWorldBorder().getAbsoluteMaxSize() + 16) + ((count / maxInChunk) * 16);
-            int y = (((count / 9) * 5) % worldHeight) + level.getMinY();
+            int y = (((count / 9) * 5) % worldHeight) + level.dimensionType().minY();
             int z = -(level.getWorldBorder().getAbsoluteMaxSize() + 16);
 
             level.setChunkForced(x / 16, z / 16, true);

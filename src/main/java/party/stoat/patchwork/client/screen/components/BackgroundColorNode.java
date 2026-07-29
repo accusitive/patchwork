@@ -22,9 +22,9 @@ public class BackgroundColorNode<T extends Renderable> extends Renderable {
     }
 
     @Override
-    protected Layout extractInnerLayout(int x, int y) {
-        var l = child.extractLayout(0, 0);
+    protected Layout extractInnerLayout(int x, int y, int z) {
+        var l = child.extractLayout(0, 0, 0);
 
-        return new Layout(x, y, l.width(), l.height(), this, List.of(l), false);
+        return new Layout(x, y, z, l.width(), l.height(), this, List.of(l), false);
     }
 }
