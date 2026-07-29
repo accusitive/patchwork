@@ -17,10 +17,12 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.ARGB;
+import net.minecraft.util.FastColor;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
@@ -28,6 +30,7 @@ import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.capabilities.Capabilities;
@@ -50,8 +53,8 @@ import java.util.stream.Stream;
 
 public class StorageConfiguration {
 
-    private static final Identifier INTERFACE_IDENTIFIER = Identifier.fromNamespaceAndPath(Patchwork.MOD_ID, "interface");
-    private static final Identifier VIRTUAL_IDENTIFIER = Identifier.fromNamespaceAndPath(Patchwork.MOD_ID, "virtual");
+    private static final ResourceLocation INTERFACE_IDENTIFIER = ResourceLocation.fromNamespaceAndPath(Patchwork.MOD_ID, "interface");
+    private static final ResourceLocation VIRTUAL_IDENTIFIER = ResourceLocation.fromNamespaceAndPath(Patchwork.MOD_ID, "virtual");
     public transient HashMap<UUID, PatchInstance> instances;
     public transient boolean initialized;
 
@@ -128,7 +131,7 @@ public class StorageConfiguration {
                                 ), List.of(
                                 new NodeDescriptor.IO("Out", "out", new NodeDescriptor.Data(NodeDescriptor.DataType.Item, false), Direction.DOWN)
                         ),
-                                ARGB.color(255, 40, 40, 40),
+                                FastColor.ARGB32.color(255, 40, 40, 40),
                                 i,
                                 BuiltInRegistries.ITEM.getKey(BlockItem.BY_BLOCK.get(block)),
                                 config
@@ -145,7 +148,7 @@ public class StorageConfiguration {
                         List.of(
                                 new NodeDescriptor.IO("Out", "out", new NodeDescriptor.Data(NodeDescriptor.DataType.Item, false), Direction.DOWN)
                         ),
-                        ARGB.color(255, 110, 100, 105),
+                        FastColor.ARGB32.color(255, 110, 100, 105),
                         i,
                         BuiltInRegistries.ITEM.getKey(BlockItem.BY_BLOCK.get(block)),
                         config
@@ -162,7 +165,7 @@ public class StorageConfiguration {
 
     public interface NodeDescriptorProvider {
 
-        NodeDescriptor apply(String config, Block state, Function<String, String> formatter, BlockEntity entity, Identifier identifier);
+        NodeDescriptor apply(String config, Block state, Function<String, String> formatter, BlockEntity entity, ResourceLocation identifier);
 
     }
 
@@ -176,7 +179,7 @@ public class StorageConfiguration {
         output.putString("graphs", new Gson().toJson(this.graphs));
     }
 
-    public static NodeDescriptor getDescriptorForBlock(ServerLevel level, BlockPos pos, Function<String, String> formatter, ServerPlayer player, Identifier i, String config) {
+    public static NodeDescriptor getDescriptorForBlock(ServerLevel level, BlockPos pos, Function<String, String> formatter, ServerPlayer player, ResourceLocation i, String config) {
         BlockState state = level.getBlockState(pos);
         BlockEntity entity = level.getBlockEntity(pos);
 
@@ -190,7 +193,7 @@ public class StorageConfiguration {
                 formatter.apply(state.getBlock().getName().getString()),
                 List.of(),
                 List.of(),
-                ARGB.color(255, 110, 100, 105),
+                FastColor.ARGB32.color(255, 110, 100, 105),
                 i,
                 BuiltInRegistries.ITEM.getKey(BlockItem.BY_BLOCK.get(state.getBlock())),
                 config
@@ -219,9 +222,9 @@ public class StorageConfiguration {
                     if(item.getItem() instanceof VirtualStorageItem vi) {
                         SFStorageDriveData config = item.get(Patchwork.STORAGE_MODULE_DATA_COMPONENT.get());
 
-                        ServerSavedData data = graph.getGraphView().getWorld().getServer().getDataStorage().computeIfAbsent(ServerSavedData.ID);
+                        ServerSavedData data = graph.getGraphView().getWorld().getServer().overworld().getDataStorage().computeIfAbsent(new SavedData.Factory<>(ServerSavedData::create, ServerSavedData::load), "configs");
 
-                        if(config == null || !data.configs.containsKey(config.id())) {
+                        if(config == null || !data.configs().containsKey(config.id())) {
                             config = new SFStorageDriveData(UUID.randomUUID());
 
                             item.set(
@@ -229,11 +232,11 @@ public class StorageConfiguration {
                                     config
                             );
 
-                            data.configs.put(config.id(), new StorageConfiguration(config.id(), vi.maxGraphs, vi.maxVirtualized));
+                            data.configs().put(config.id(), new StorageConfiguration(config.id(), vi.maxGraphs, vi.maxVirtualized));
                             data.setDirty();
                         }
 
-                        configs.add(data.configs.get(config.id()));
+                        configs.add(data.configs().get(config.id()));
                     }
                 }
             }
@@ -282,7 +285,7 @@ public class StorageConfiguration {
         return categories;
     }
 
-    private static NodeDescriptor configureBlockAndGetDescriptor(ServerLevel level, ServerPlayer player, BlockPos proxiedPos, Function<String, String> formatter, Identifier identifier, String config) {
+    private static NodeDescriptor configureBlockAndGetDescriptor(ServerLevel level, ServerPlayer player, BlockPos proxiedPos, Function<String, String> formatter, ResourceLocation identifier, String config) {
         BlockState state = level.getBlockState(proxiedPos);
         BlockEntity entity = level.getBlockEntity(proxiedPos);
 

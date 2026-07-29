@@ -5,11 +5,11 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import party.stoat.patchwork.Patchwork;
 
 public record EjectVirtualizedMachineServerboundPayload(BlockPos controllerPos, BlockPos virtualPos) implements CustomPacketPayload {
-    public static final Identifier EJECT_VIRTUAL = Identifier.fromNamespaceAndPath(Patchwork.MOD_ID, "eject_virtual");
+    public static final ResourceLocation EJECT_VIRTUAL = ResourceLocation.fromNamespaceAndPath(Patchwork.MOD_ID, "eject_virtual");
     public static final CustomPacketPayload.Type<EjectVirtualizedMachineServerboundPayload> TYPE = new CustomPacketPayload.Type<>(EJECT_VIRTUAL);
     public static final StreamCodec<RegistryFriendlyByteBuf, EjectVirtualizedMachineServerboundPayload> CODEC = StreamCodec
             .composite(

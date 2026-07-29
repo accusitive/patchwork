@@ -1,6 +1,7 @@
 package party.stoat.patchwork.patchgraph;
 
 import com.kneelawk.graphlib.api.graph.BlockGraph;
+import mekanism.api.chemical.IChemicalHandler;
 import mekanism.api.chemical.IMekanismChemicalHandler;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -31,7 +32,7 @@ public abstract class Node {
         return this.uuid;
     }
 
-    public @Nullable IMekanismChemicalHandler getChemicalHandler(ServerLevel level, NodeDescriptor.IO port, PatchInstance graph) {
+    public @Nullable IChemicalHandler getChemicalHandler(ServerLevel level, NodeDescriptor.IO port, PatchInstance graph) {
         return null;
     }
 

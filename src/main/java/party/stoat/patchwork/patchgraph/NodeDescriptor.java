@@ -4,14 +4,14 @@ import com.google.gson.Gson;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.Identifier;
-import net.minecraft.util.ARGB;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FastColor;
 
 import java.util.List;
 import java.util.Optional;
 
-public record NodeDescriptor(String title, List<IO> inputs, List<IO> outputs, int color, Identifier identifier,
-                             Identifier icon, String configuration) {
+public record NodeDescriptor(String title, List<IO> inputs, List<IO> outputs, int color, ResourceLocation identifier,
+                             ResourceLocation icon, String configuration) {
 
     public static NodeDescriptor ofName(String newName, NodeDescriptor other) {
         return new NodeDescriptor(newName, other.inputs, other.outputs, other.color, other.identifier, other.icon, other.configuration);
@@ -31,29 +31,29 @@ public record NodeDescriptor(String title, List<IO> inputs, List<IO> outputs, in
                     IO.CODEC.listOf().fieldOf("inputs").forGetter(NodeDescriptor::inputs),
                     IO.CODEC.listOf().fieldOf("outputs").forGetter(NodeDescriptor::outputs),
                     Codec.INT.fieldOf("color").forGetter(NodeDescriptor::color),
-                    Identifier.CODEC.fieldOf("identifier").forGetter(NodeDescriptor::identifier),
-                    Identifier.CODEC.optionalFieldOf("icon")
+                    ResourceLocation.CODEC.fieldOf("ResourceLocation").forGetter(NodeDescriptor::identifier),
+                    ResourceLocation.CODEC.optionalFieldOf("icon")
                             .forGetter(node -> Optional.ofNullable(node.icon())),
                     Codec.STRING.fieldOf("configuration").forGetter(NodeDescriptor::configuration)
-            ).apply(instance, (title, inputs, outputs, color, identifier, icon, configuration) ->
+            ).apply(instance, (title, inputs, outputs, color, ResourceLocation, icon, configuration) ->
                     new NodeDescriptor(
                             title,
                             inputs,
                             outputs,
                             color,
-                            identifier,
+                            ResourceLocation,
                             icon.orElse(null),
                             configuration
                     )
             )
     );
 
-    public NodeDescriptor(String title, List<IO> inputs, List<IO> outputs, int color, Identifier identifier, String configuration) {
-        this(title, inputs, outputs, color, identifier, null, configuration);
+    public NodeDescriptor(String title, List<IO> inputs, List<IO> outputs, int color, ResourceLocation ResourceLocation, String configuration) {
+        this(title, inputs, outputs, color, ResourceLocation, null, configuration);
     }
 
-    public <D extends NodeConfiguration> NodeDescriptor(String title, List<IO> inputs, List<IO> outputs, int color, Identifier identifier, D configuration) {
-        this(title, inputs, outputs, color, identifier, null, new Gson().toJson(configuration));
+    public <D extends NodeConfiguration> NodeDescriptor(String title, List<IO> inputs, List<IO> outputs, int color, ResourceLocation ResourceLocation, D configuration) {
+        this(title, inputs, outputs, color, ResourceLocation, null, new Gson().toJson(configuration));
     }
 
     public record Data(DataType d, boolean array) {
@@ -98,10 +98,10 @@ public record NodeDescriptor(String title, List<IO> inputs, List<IO> outputs, in
 
     public enum DataType {
 
-        Item(ARGB.color(252, 186, 3)),
-        Fluid(ARGB.color(187, 242, 250)),
-        Energy(ARGB.color(91, 143, 66)),
-        Chemical(ARGB.color(175, 113, 76));
+        Item(FastColor.ARGB32.color(252, 186, 3)),
+        Fluid(FastColor.ARGB32.color(187, 242, 250)),
+        Energy(FastColor.ARGB32.color(91, 143, 66)),
+        Chemical(FastColor.ARGB32.color(175, 113, 76));
 
         public final int color;
 

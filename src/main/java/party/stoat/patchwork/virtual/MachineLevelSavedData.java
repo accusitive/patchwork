@@ -1,45 +1,56 @@
 package party.stoat.patchwork.virtual;
 
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
-import net.minecraft.world.level.block.Block;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.world.level.saveddata.SavedData;
-import net.minecraft.world.level.saveddata.SavedDataType;
-import party.stoat.patchwork.Patchwork;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 
 public class MachineLevelSavedData extends SavedData {
 
     private int count;
     public HashSet<BlockPos> virtualized;
 
-    public static final SavedDataType<MachineLevelSavedData> ID = new SavedDataType<>(
-            // The identifier of the saved data
-            // Used as the path within the `data` folder
-            Identifier.fromNamespaceAndPath(Patchwork.MOD_ID, "machine_count"),
-            // The initial constructor
-            MachineLevelSavedData::new,
-            // The codec used to serialize the data
-            RecordCodecBuilder.create(instance -> instance.group(
-                    Codec.INT.fieldOf("count").forGetter(sd -> sd.count),
-                    Codec.list(BlockPos.CODEC).fieldOf("virtualized").forGetter(sd -> sd.virtualized.stream().toList())
-            ).apply(instance, MachineLevelSavedData::new))
-    );
+    public MachineLevelSavedData() { }
 
-
-    public MachineLevelSavedData() {
-        this.virtualized = new HashSet<>();
+    public static MachineLevelSavedData create() {
+        return new MachineLevelSavedData();
     }
 
-    public MachineLevelSavedData(int count, List<BlockPos> virtualized) {
-        this.count = count;
-        this.virtualized = new HashSet<>(virtualized);
+    public static MachineLevelSavedData load(CompoundTag tag, HolderLookup.Provider provider) {
+        MachineLevelSavedData data = new MachineLevelSavedData();
+
+        data.count = tag.getInt("count");
+
+        ListTag list = tag.getList("virtualized", Tag.TAG_COMPOUND);
+
+        for (Tag t : list) {
+            CompoundTag p = (CompoundTag)t;
+            data.virtualized.add(new BlockPos(p.getInt("x"), p.getInt("y"), p.getInt("z")));
+        }
+
+        return data;
+    }
+
+    @Override
+    public @NotNull CompoundTag save(@NotNull CompoundTag tag, HolderLookup.@NotNull Provider provider) {
+        tag.putInt("count", count);
+        ListTag list = new ListTag();
+
+        for (BlockPos pos : virtualized) {
+            CompoundTag p = new CompoundTag();
+            p.putInt("x", pos.getX());
+            p.putInt("y", pos.getY());
+            p.putInt("z", pos.getZ());
+            list.add(p);
+        }
+
+        tag.put("virtualized", list);
+        return tag;
     }
 
     public int increment() {

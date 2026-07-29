@@ -10,6 +10,7 @@ import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.profiling.jfr.event.ChunkGenerationEvent;
@@ -22,6 +23,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
@@ -96,10 +98,10 @@ public class Patchwork {
             () -> new MenuType<>(SFControllerMenu::new, FeatureFlags.DEFAULT_FLAGS)
         );
 
-    public static final BlockCapability<EnergyHandler, Void> SF_CONTROLLER_ENERGY_CAPABILITY =
-            BlockCapability.createVoid(Identifier.fromNamespaceAndPath(MOD_ID, "energy_handler"), EnergyHandler.class);
+    public static final BlockCapability<Capabilities.EnergyStorage, Void> SF_CONTROLLER_ENERGY_CAPABILITY =
+            BlockCapability.createVoid(ResourceLocation.fromNamespaceAndPath(MOD_ID, "energy_handler"), Capabilities.EnergyStorage.class);
 
-    public static final GraphUniverse UNIVERSE = GraphUniverse.builder().build(Identifier.fromNamespaceAndPath(MOD_ID, "graph_universe"));
+    public static final GraphUniverse UNIVERSE = GraphUniverse.builder().build(ResourceLocation.fromNamespaceAndPath(MOD_ID, "graph_universe"));
 
     public static final VirtualManager VIRTUAL_MANAGER = new VirtualManager();
 
@@ -228,15 +230,15 @@ public class Patchwork {
                 EjectVirtualizedMachineServerboundPayload.CODEC,
                 (payload, context) -> {
                     if(context.player().level().getBlockEntity(payload.controllerPos()) instanceof SFControllerBlockEntity controller && context.player() instanceof ServerPlayer serverPlayer) {
-                        ServerLevel level = serverPlayer.level();
-                        var graph = Patchwork.UNIVERSE.getGraphWorld(serverPlayer.level()).getGraphForNode(new NodePos(payload.controllerPos(), SFControllerNode.INSTANCE));
+                        ServerLevel level = (ServerLevel) serverPlayer.level();
+                        var graph = Patchwork.UNIVERSE.getGraphWorld(level).getGraphForNode(new NodePos(payload.controllerPos(), SFControllerNode.INSTANCE));
                         var configs = StorageConfiguration.getConfigurationsFromNetwork(graph);
 
                         for(var config : configs) {
                             if(config.virtualized.contains(payload.virtualPos())) {
                                 config.virtualized.remove(payload.virtualPos());
 
-                                ((LevelVirtualDrops) serverPlayer.level()).patchwork$set(true);
+                                ((LevelVirtualDrops) level).patchwork$set(true);
 
                                 BlockState bs = level.getBlockState(payload.virtualPos());
                                 BlockEntity be = level.getBlockEntity(payload.virtualPos());
@@ -256,7 +258,7 @@ public class Patchwork {
                                     level.addFreshEntity(new ItemEntity(level, context.player().getX(), context.player().getY(), context.player().getZ(), itemEntity.getItem()));
                                 }
 
-                                level.getServer().getDataStorage().computeIfAbsent(ServerSavedData.ID).setDirty();
+                                level.getDataStorage().computeIfAbsent(new SavedData.Factory<>(ServerSavedData::create, ServerSavedData::load), "configs").setDirty();
 
                                 break;
                             }
@@ -316,8 +318,8 @@ public class Patchwork {
         registrar.playToServer(
                 OpenRemoteMachineServerboundPayload.TYPE, OpenRemoteMachineServerboundPayload.CODEC, (payload, context) -> {
                     if(context.player().level().getBlockEntity(payload.pos()) instanceof SFControllerBlockEntity e && context.player() instanceof ServerPlayer serverPlayer) {
-                        ServerLevel level = serverPlayer.level();
-                        var graph = Patchwork.UNIVERSE.getGraphWorld(serverPlayer.level()).getGraphForNode(new NodePos(payload.pos(), SFControllerNode.INSTANCE));
+                        ServerLevel level = (ServerLevel) serverPlayer.level();
+                        var graph = Patchwork.UNIVERSE.getGraphWorld(level).getGraphForNode(new NodePos(payload.pos(), SFControllerNode.INSTANCE));
                         var configs = StorageConfiguration.getConfigurationsFromNetwork(graph);
 
                         outer: for(var config : configs) for(var patch : config.instances.values()) {
@@ -378,7 +380,7 @@ public class Patchwork {
                                 config.instances.put(newPatch.graphId, instance);
                                 instance.initialize(context.player().level().getServer());
 
-                                serverLevel.getServer().getDataStorage().computeIfAbsent(ServerSavedData.ID).setDirty();
+                                serverLevel.getDataStorage().computeIfAbsent(new SavedData.Factory<>(ServerSavedData::create, ServerSavedData::load), "configs").setDirty();
 
                                 StorageConfiguration.syncToPlayer(configs, graph, serverLevel, (ServerPlayer) context.player(), payload.pos());
                             }
@@ -404,7 +406,7 @@ public class Patchwork {
 
                             StorageConfiguration.syncToPlayer(configs, graph, (ServerLevel) context.player().level(), (ServerPlayer) context.player(), payload.pos());
 
-                            ((ServerLevel) context.player().level()).getServer().getDataStorage().computeIfAbsent(ServerSavedData.ID).setDirty();
+                            ((ServerLevel) context.player().level()).getDataStorage().computeIfAbsent(new SavedData.Factory<>(ServerSavedData::create, ServerSavedData::load), "configs").setDirty();
 
                             break;
                         }
@@ -415,7 +417,7 @@ public class Patchwork {
 
     private void registerCapabilities(RegisterCapabilitiesEvent event) {
         event.registerBlockEntity(
-                Capabilities.Energy.BLOCK,
+                Capabilities.EnergyStorage.BLOCK,
                 MyBlocks.SF_CONTROLLER_BLOCK_ENTITY.get(),
                 (entity, side) -> entity.handler
         );

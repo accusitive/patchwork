@@ -7,9 +7,9 @@ import net.minecraft.client.gui.render.TextureSetup;
 import net.minecraft.client.renderer.state.gui.GuiElementRenderState;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
-import org.jspecify.annotations.Nullable;
 import party.stoat.patchwork.PatchworkClient;
 
+import javax.annotation.Nullable;
 import java.util.List;
 
 

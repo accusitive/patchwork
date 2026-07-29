@@ -3,29 +3,26 @@ package party.stoat.patchwork.patchgraph.nodes;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.kneelawk.graphlib.api.graph.BlockGraph;
-import mekanism.api.chemical.ChemicalResource;
+import mekanism.api.chemical.IChemicalHandler;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.transfer.ResourceHandler;
-import net.neoforged.neoforge.transfer.energy.EnergyHandler;
-import net.neoforged.neoforge.transfer.fluid.FluidResource;
-import net.neoforged.neoforge.transfer.item.ItemResource;
-import net.neoforged.neoforge.transfer.transaction.Transaction;
-import net.neoforged.neoforge.transfer.transaction.TransactionContext;
-import org.jspecify.annotations.Nullable;
+import net.neoforged.neoforge.energy.EnergyStorage;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.items.IItemHandler;
 import party.stoat.patchwork.Patchwork;
 import party.stoat.patchwork.compat.MekanismConfigurator;
 import party.stoat.patchwork.patchgraph.*;
 import party.stoat.patchwork.block.sf_controller.SFControllerBlockEntity;
 
+import javax.annotation.Nullable;
 import java.util.UUID;
 
 public class VirtualizedBlockNode extends Node {
 
-    private static final Identifier IDENTIFIER = Identifier.fromNamespaceAndPath(Patchwork.MOD_ID, "patch_nodes/container_node");
+    private static final ResourceLocation IDENTIFIER = ResourceLocation.fromNamespaceAndPath(Patchwork.MOD_ID, "patch_nodes/container_node");
 
     public BlockPos proxyPos;
 
@@ -34,35 +31,35 @@ public class VirtualizedBlockNode extends Node {
     }
 
     @Override
-    public @Nullable ResourceHandler<ChemicalResource> getChemicalHandler(ServerLevel level, NodeDescriptor.IO port, PatchInstance graph) {
+    public @Nullable IChemicalHandler getChemicalHandler(ServerLevel level, NodeDescriptor.IO port, PatchInstance graph) {
         if(this.proxyPos == null) return null;
         if(level == null) return null;
         return level.getCapability(mekanism.common.capabilities.Capabilities.CHEMICAL.block(), this.proxyPos, port.direction().orElse(null));
     }
 
     @Override
-    public @Nullable ResourceHandler<ItemResource> getItemHandler(ServerLevel level, NodeDescriptor.IO port, PatchInstance graph) {
+    public @Nullable IItemHandler getItemHandler(ServerLevel level, NodeDescriptor.IO port, PatchInstance graph) {
         if(this.proxyPos == null) return null;
         if(level == null) return null;
-        return level.getCapability(Capabilities.Item.BLOCK, this.proxyPos, port.direction().orElse(null));
+        return level.getCapability(Capabilities.ItemHandler.BLOCK, this.proxyPos, port.direction().orElse(null));
     }
 
     @Override
-    public @Nullable ResourceHandler<FluidResource> getFluidHandler(ServerLevel level, NodeDescriptor.IO port, PatchInstance graph) {
+    public @Nullable IFluidHandler getFluidHandler(ServerLevel level, NodeDescriptor.IO port, PatchInstance graph) {
         if(this.proxyPos == null) return null;
         if(level == null) return null;
-        return level.getCapability(Capabilities.Fluid.BLOCK, this.proxyPos, port.direction().orElse(null));
+        return level.getCapability(Capabilities.FluidHandler.BLOCK, this.proxyPos, port.direction().orElse(null));
     }
 
     @Override
-    public @Nullable EnergyHandler getEnergyHandler(ServerLevel level, NodeDescriptor.IO port, PatchInstance graph) {
+    public @Nullable EnergyStorage getEnergyHandler(ServerLevel level, NodeDescriptor.IO port, PatchInstance graph) {
         if(this.proxyPos == null) return null;
         if(level == null) return null;
-        return level.getCapability(Capabilities.Energy.BLOCK, this.proxyPos, port.direction().orElse(null));
+        return level.getCapability(Capabilities.EnergyStorage.BLOCK, this.proxyPos, port.direction().orElse(null));
     }
 
     @Override
-    public void tick(StorageConfiguration config, PatchInstance patchInstance, ServerLevel level, BlockGraph network, TransactionContext context, SFControllerBlockEntity entity) {
+    public void tick(StorageConfiguration config, PatchInstance patchInstance, ServerLevel level, BlockGraph network, SFControllerBlockEntity entity) {
         var outputs = this.getOutputConnections(patchInstance.graph);
 
         if(this.proxyPos == null) return;
@@ -198,7 +195,7 @@ public class VirtualizedBlockNode extends Node {
     }
 
     @Override
-    public Identifier getIdentifier() {
+    public ResourceLocation getIdentifier() {
         return IDENTIFIER;
     }
 

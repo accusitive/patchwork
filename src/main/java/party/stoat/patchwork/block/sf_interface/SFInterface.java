@@ -26,6 +26,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import party.stoat.patchwork.Patchwork;
 import party.stoat.patchwork.block.SFNetworkConnectable;
+import party.stoat.patchwork.block.ShapeUtils;
 import party.stoat.patchwork.graphlib.SFBehavior;
 import party.stoat.patchwork.graphlib.SFInterfaceNode;
 
@@ -68,21 +69,21 @@ public class SFInterface extends DirectionalBlock implements SFNetworkConnectabl
 
     @Override
     protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return this.getOcclusionShape(state);
+        return this.getOcclusionShape(state, level, pos);
     }
 
     @Override
     protected VoxelShape getVisualShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return this.getOcclusionShape(state);
+        return this.getOcclusionShape(state, level, pos);
     }
 
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return this.getOcclusionShape(state);
+        return this.getOcclusionShape(state, level, pos);
     }
 
     @Override
-    protected VoxelShape getOcclusionShape(BlockState state) {
+    protected VoxelShape getOcclusionShape(BlockState state, BlockGetter getter, BlockPos pos) {
         VoxelShape shape = Shapes.join(
                 Shapes.join(
                         Shapes.create(2.0 / 16.0, 2.0 / 16.0, 0.0 / 16.0, 14.0 / 16.0, 14.0 / 16.0, 2.0 / 16.0),
@@ -90,11 +91,11 @@ public class SFInterface extends DirectionalBlock implements SFNetworkConnectabl
                 Shapes.create(7.0 / 16.0, 7.0 / 16.0, 3.0 / 16.0, 9.0 / 16.0, 9.0 / 16.0, 9.0 / 16.0), BooleanOp.OR
         );
 
-        shape = Shapes.rotateAll(shape).get(state.getValue(FACING));
+        shape = ShapeUtils.rotateAll(shape).get(state.getValue(FACING));
 
         VoxelShape part = Shapes.create(7.0 / 16.0, 7.0 / 16.0, 0.0, 9.0 / 16.0, 9.0 / 16.0, 7.0 / 16.0);
 
-        var parts = Shapes.rotateAll(part);
+        var parts = ShapeUtils.rotateAll(part);
 
         if(state.getValue(NORTH)) shape = Shapes.join(shape, parts.get(Direction.NORTH), BooleanOp.OR);
         if(state.getValue(EAST)) shape = Shapes.join(shape, parts.get(Direction.EAST), BooleanOp.OR);

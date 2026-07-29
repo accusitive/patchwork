@@ -3,6 +3,8 @@ package party.stoat.patchwork.mixin;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.progress.ChunkProgressListener;
+import net.minecraft.world.RandomSequences;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.level.dimension.LevelStem;
 import net.minecraft.world.level.storage.LevelStorageSource;
@@ -28,7 +30,7 @@ public class LevelAddVirtualDropField implements LevelVirtualDrops {
     public ArrayList<ItemEntity> patchwork$drops;
 
     @Inject(method = "<init>*", at = @At("RETURN"))
-    public void init(MinecraftServer server, Executor executor, LevelStorageSource.LevelStorageAccess levelStorage, ServerLevelData levelData, ResourceKey dimension, LevelStem levelStem, boolean isDebug, long biomeZoomSeed, List customSpawners, boolean tickTime, CallbackInfo ci) {
+    public void init(MinecraftServer server, Executor executor, LevelStorageSource.LevelStorageAccess levelStorage, ServerLevelData levelData, ResourceKey dimension, LevelStem levelStem, ChunkProgressListener listener, boolean isDebug, long biomeZoomSeed, List customSpawners, boolean tickTime, RandomSequences sequences, CallbackInfo ci) {
         this.patchwork$drops = new ArrayList<>();
     }
 

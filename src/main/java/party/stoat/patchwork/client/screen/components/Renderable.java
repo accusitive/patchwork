@@ -1,15 +1,14 @@
 package party.stoat.patchwork.client.screen.components;
 
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.input.CharacterEvent;
-import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.events.GuiEventListener;
 import org.joml.Matrix3x2f;
 import org.joml.Vector2f;
 import party.stoat.patchwork.client.screen.EditorScreen;
 
 import java.util.List;
 
-public abstract class Renderable {
+public abstract class Renderable implements GuiEventListener {
     public int offsetX;
     public int offsetY;
 
@@ -28,16 +27,16 @@ public abstract class Renderable {
             this(x, y, width, height, r, children, disabled, true, 1.0f);
         }
 
-        public void paint(GuiGraphicsExtractor g) {
+        public void paint(GuiGraphics g) {
 //            g.pose().translate(this.x() / this.scale, this.y() / this.scale);
-            g.pose().pushMatrix();
+            g.pose().pushPose();
             g.pose().scale(this.scale());
             var mat = g.pose().translate(this.x, this.y);
             if(this.scissor) g.enableScissor(0, 0, this.width, this.height);
             this.r.paint(g, this, mat);
             this.children.forEach(c -> c.paint(g));
             if(this.scissor) g.disableScissor();
-            g.pose().popMatrix();
+            g.pose().popPose();
 //            g.pose().popMatrix();
         }
 
@@ -137,7 +136,7 @@ public abstract class Renderable {
         return false;
     }
 
-    public void paint(GuiGraphicsExtractor g, Layout l, Matrix3x2f mat) {
+    public void paint(GuiGraphics g, Layout l, Matrix3x2f mat) {
         var point = mat.transformPosition(new Vector2f(this.offsetX, this.offsetY));
         this.absX = (int) point.x;
         this.absY = (int) point.y;

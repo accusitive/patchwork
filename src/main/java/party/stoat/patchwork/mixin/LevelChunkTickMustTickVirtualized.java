@@ -4,6 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.saveddata.SavedData;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -23,9 +24,7 @@ public class LevelChunkTickMustTickVirtualized {
     public void tickTheSillyBlud(BlockPos pos, CallbackInfoReturnable<Boolean> cir) {
         if(cir.getReturnValue() == false) {
             if(this.level instanceof ServerLevel serverLevel) {
-                cir.setReturnValue(
-                        serverLevel.getDataStorage().computeIfAbsent(MachineLevelSavedData.ID).virtualized.contains(pos)
-                );
+                cir.setReturnValue(serverLevel.getDataStorage().computeIfAbsent(new SavedData.Factory<>(MachineLevelSavedData::create, MachineLevelSavedData::load), "machine_count").virtualized.contains(pos));
             }
         }
     }

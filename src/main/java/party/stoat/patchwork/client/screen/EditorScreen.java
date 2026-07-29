@@ -3,23 +3,17 @@ package party.stoat.patchwork.client.screen;
 import com.google.gson.Gson;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.input.CharacterEvent;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
-import net.minecraft.util.ARGB;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.client.network.ClientPacketDistributor;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.joml.Matrix3x2f;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 import party.stoat.patchwork.Patchwork;
 import party.stoat.patchwork.patchgraph.StorageConfiguration;
@@ -33,16 +27,17 @@ import party.stoat.patchwork.network.CreatePatchServerboundPayload;
 import party.stoat.patchwork.network.UpdatePatchServerboundPayload;
 import party.stoat.patchwork.patchgraph.nodes.SplitterNode;
 
+import javax.annotation.Nullable;
 import java.util.*;
 
 public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
 
     public static Font FONT = Minecraft.getInstance().font;
 
-    private static final Identifier CONTAINER_TEXTURE = Identifier.fromNamespaceAndPath(Patchwork.MOD_ID, "textures/gui/container/inventory.png");
-    public static final Identifier MAGNIFYING_GLASS_TEXTURE = Identifier.fromNamespaceAndPath(Patchwork.MOD_ID, "textures/gui/magnifying_glass.png");
-    public static final Identifier EJECT_TEXTURE = Identifier.fromNamespaceAndPath(Patchwork.MOD_ID, "textures/gui/eject.png");
-    public static final Identifier WRENCH_TEXTURE = Identifier.fromNamespaceAndPath(Patchwork.MOD_ID, "textures/gui/eject.png");
+    private static final ResourceLocation CONTAINER_TEXTURE = ResourceLocation.fromNamespaceAndPath(Patchwork.MOD_ID, "textures/gui/container/inventory.png");
+    public static final ResourceLocation MAGNIFYING_GLASS_TEXTURE = ResourceLocation.fromNamespaceAndPath(Patchwork.MOD_ID, "textures/gui/magnifying_glass.png");
+    public static final ResourceLocation EJECT_TEXTURE = ResourceLocation.fromNamespaceAndPath(Patchwork.MOD_ID, "textures/gui/eject.png");
+    public static final ResourceLocation WRENCH_TEXTURE = ResourceLocation.fromNamespaceAndPath(Patchwork.MOD_ID, "textures/gui/eject.png");
 
     private static final int CONTAINER_WIDTH = 175;
     private static final int CONTAINER_HEIGHT = 90;
@@ -57,7 +52,9 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
     private Renderable saveButton = new ImageButton(ImageButton.SAVE, 28, 28, (_, _) -> this.save());
 
     public EditorScreen(SFControllerMenu menu, Inventory inventory, Component component) {
-        super(menu, inventory, component, CONTAINER_WIDTH, CONTAINER_HEIGHT);
+        super(menu, inventory, component);
+        this.width = CONTAINER_WIDTH;
+        this.height = CONTAINER_HEIGHT;
         this.state = new EditorState();
         this.state.menu = menu;
 

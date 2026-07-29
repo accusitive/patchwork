@@ -6,10 +6,11 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import party.stoat.patchwork.Patchwork;
 
 public record CreatePatchServerboundPayload(BlockPos pos) implements CustomPacketPayload {
-    public static final Identifier CREATE_PATCH_ID = Identifier.fromNamespaceAndPath(Patchwork.MOD_ID, "create_patch");
+    public static final ResourceLocation CREATE_PATCH_ID = ResourceLocation.fromNamespaceAndPath(Patchwork.MOD_ID, "create_patch");
     public static final CustomPacketPayload.Type<CreatePatchServerboundPayload> TYPE = new CustomPacketPayload.Type<>(CREATE_PATCH_ID);
     public static final StreamCodec<RegistryFriendlyByteBuf, CreatePatchServerboundPayload> CODEC = StreamCodec.composite(BlockPos.STREAM_CODEC, CreatePatchServerboundPayload::pos, CreatePatchServerboundPayload::new);
 

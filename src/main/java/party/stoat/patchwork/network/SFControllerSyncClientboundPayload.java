@@ -5,7 +5,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import party.stoat.patchwork.Patchwork;
 import party.stoat.patchwork.patchgraph.NodeDescriptor;
 import party.stoat.patchwork.patchgraph.PatchGraph;
@@ -15,7 +15,7 @@ import java.util.List;
 
 public record SFControllerSyncClientboundPayload(List<PatchGraph> patches, List<StorageConfiguration.NodeCategory> nodeDescriptors, BlockPos controllerPos) implements CustomPacketPayload {
 
-    public static final Identifier PATCH_CONTROLLER_SYNC = Identifier.fromNamespaceAndPath(Patchwork.MOD_ID, "patch_sync");
+    public static final ResourceLocation PATCH_CONTROLLER_SYNC = ResourceLocation.fromNamespaceAndPath(Patchwork.MOD_ID, "patch_sync");
     public static final CustomPacketPayload.Type<SFControllerSyncClientboundPayload> TYPE = new CustomPacketPayload.Type<>(PATCH_CONTROLLER_SYNC);
     public static final StreamCodec<RegistryFriendlyByteBuf, SFControllerSyncClientboundPayload> CODEC = StreamCodec
             .composite(
