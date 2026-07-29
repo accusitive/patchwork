@@ -2,10 +2,9 @@ package party.stoat.patchwork.patchgraph;
 
 import com.kneelawk.graphlib.api.graph.BlockGraph;
 import mekanism.api.chemical.IChemicalHandler;
-import mekanism.api.chemical.IMekanismChemicalHandler;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.neoforged.neoforge.energy.EnergyStorage;
+import net.neoforged.neoforge.energy.IEnergyStorage;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.items.IItemHandler;
 import party.stoat.patchwork.block.sf_controller.SFControllerBlockEntity;
@@ -44,7 +43,7 @@ public abstract class Node {
         return null;
     }
 
-    public @Nullable EnergyStorage getEnergyHandler(ServerLevel level, NodeDescriptor.IO port, PatchInstance graph) {
+    public @Nullable IEnergyStorage getEnergyHandler(ServerLevel level, NodeDescriptor.IO port, PatchInstance graph) {
         return null;
     }
 

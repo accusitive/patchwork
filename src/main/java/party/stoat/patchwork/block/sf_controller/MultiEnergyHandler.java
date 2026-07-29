@@ -1,28 +1,29 @@
 package party.stoat.patchwork.block.sf_controller;
 
 import net.neoforged.neoforge.energy.EnergyStorage;
+import net.neoforged.neoforge.energy.IEnergyStorage;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class MultiEnergyHandler {
+public class MultiEnergyHandler implements IEnergyStorage {
 
-    public List<EnergyStorage> handlers;
+    public List<IEnergyStorage> handlers;
 
-    public MultiEnergyHandler(List<EnergyStorage> handlers) {
+    public MultiEnergyHandler(List<IEnergyStorage> handlers) {
         this.handlers = handlers;
     }
 
-    public List<EnergyStorage> getHandlers() {
+    public List<IEnergyStorage> getHandlers() {
         return this.handlers;
     }
 
     public long getAmountAsLong() {
-        return getHandlers().stream().mapToLong(EnergyStorage::getEnergyStored).sum();
+        return getHandlers().stream().mapToLong(IEnergyStorage::getEnergyStored).sum();
     }
 
     public long getCapacityAsLong() {
-        return getHandlers().stream().mapToLong(EnergyStorage::getMaxEnergyStored).sum();
+        return getHandlers().stream().mapToLong(IEnergyStorage::getMaxEnergyStored).sum();
     }
 
     public int insert(int amount, boolean simulate) {
@@ -56,5 +57,35 @@ public class MultiEnergyHandler {
 
     public int extract(int amount, boolean simulate) {
         return 0;
+    }
+
+    @Override
+    public int receiveEnergy(int maxReceive, boolean simulate) {
+        return insert(maxReceive, simulate);
+    }
+
+    @Override
+    public int extractEnergy(int maxExtract, boolean simulate) {
+        return extract(maxExtract, simulate);
+    }
+
+    @Override
+    public int getEnergyStored() {
+        return (int)Math.min(getAmountAsLong(), Integer.MAX_VALUE);
+    }
+
+    @Override
+    public int getMaxEnergyStored() {
+        return (int)Math.min(getCapacityAsLong(), Integer.MAX_VALUE);
+    }
+
+    @Override
+    public boolean canExtract() {
+        return handlers.stream().anyMatch(IEnergyStorage::canExtract);
+    }
+
+    @Override
+    public boolean canReceive() {
+        return handlers.stream().anyMatch(IEnergyStorage::canReceive);
     }
 }

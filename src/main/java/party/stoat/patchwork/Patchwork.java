@@ -9,7 +9,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -39,7 +38,6 @@ import net.neoforged.neoforge.event.level.ChunkEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.registries.DeferredItem;
-import net.neoforged.neoforge.transfer.energy.EnergyHandler;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
@@ -106,21 +104,21 @@ public class Patchwork {
     public static final VirtualManager VIRTUAL_MANAGER = new VirtualManager();
 
     // Creates a new food item with the id "patchwork:example_id", nutrition 1 and saturation 2
-    public static final DeferredItem<Item> SUPERCONDUCTING_INGOT = ITEMS.registerSimpleItem("superconducting_ingot", p -> p);
-    public static final DeferredItem<Item> SUPERCONDUCTING_DUST = ITEMS.registerSimpleItem("superconducting_dust", p -> p);
+    public static final DeferredItem<Item> SUPERCONDUCTING_INGOT = ITEMS.registerSimpleItem("superconducting_ingot");
+    public static final DeferredItem<Item> SUPERCONDUCTING_DUST = ITEMS.registerSimpleItem("superconducting_dust");
 
-    public static final DeferredItem<Item> MEDIATION_CORE = ITEMS.registerSimpleItem("mediation_core", p -> p);
-    public static final DeferredItem<Item> NEGOTIATION_CORE = ITEMS.registerSimpleItem("negotiation_core", p -> p);
+    public static final DeferredItem<Item> MEDIATION_CORE = ITEMS.registerSimpleItem("mediation_core");
+    public static final DeferredItem<Item> NEGOTIATION_CORE = ITEMS.registerSimpleItem("negotiation_core");
 
     public static final DeferredItem<Item> T1_VIRTUAL_STORAGE = ITEMS.registerItem("t1_virtual_storage", props -> new VirtualStorageItem(props, 1, 4));
     public static final DeferredItem<Item> T2_VIRTUAL_STORAGE = ITEMS.registerItem("t2_virtual_storage", props -> new VirtualStorageItem(props, 2, 16));
     public static final DeferredItem<Item> T3_VIRTUAL_STORAGE = ITEMS.registerItem("t3_virtual_storage", p -> new VirtualStorageItem(p.stacksTo(1).component(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true), 8, 64));
 
-    public static final DeferredItem<Item> T1_STORAGE_CELL = ITEMS.registerSimpleItem("t1_storage_cell", p -> p);
-    public static final DeferredItem<Item> T2_STORAGE_CELL = ITEMS.registerSimpleItem("t2_storage_cell", p -> p);
-    public static final DeferredItem<Item> T3_STORAGE_CELL = ITEMS.registerSimpleItem("t3_storage_cell", p -> p);
+    public static final DeferredItem<Item> T1_STORAGE_CELL = ITEMS.registerSimpleItem("t1_storage_cell");
+    public static final DeferredItem<Item> T2_STORAGE_CELL = ITEMS.registerSimpleItem("t2_storage_cell");
+    public static final DeferredItem<Item> T3_STORAGE_CELL = ITEMS.registerSimpleItem("t3_storage_cell");
 
-    public static final DeferredItem<Item> STORAGE_HOUSING = ITEMS.registerSimpleItem("storage_housing", p -> p);
+    public static final DeferredItem<Item> STORAGE_HOUSING = ITEMS.registerSimpleItem("storage_housing");
 
     // Creates a creative tab with the id "patchwork:example_tab" for the example item, that is placed after the combat tab
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> PATCHWORK_TAB = CREATIVE_MODE_TABS.register("patchwork", () -> CreativeModeTab.builder()
@@ -243,7 +241,6 @@ public class Patchwork {
                                 BlockState bs = level.getBlockState(payload.virtualPos());
                                 BlockEntity be = level.getBlockEntity(payload.virtualPos());
 
-                                if(be != null) be.preRemoveSideEffects(payload.virtualPos(), bs);
                                 Block.dropResources(bs, (ServerLevel) level, payload.virtualPos(), be);
 
                                 level.setBlockAndUpdate(payload.virtualPos(), Blocks.AIR.defaultBlockState());

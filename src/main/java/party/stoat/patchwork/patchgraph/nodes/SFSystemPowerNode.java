@@ -3,7 +3,7 @@ package party.stoat.patchwork.patchgraph.nodes;
 import com.kneelawk.graphlib.api.graph.BlockGraph;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.neoforged.neoforge.energy.EnergyStorage;
+import net.neoforged.neoforge.energy.IEnergyStorage;
 import party.stoat.patchwork.Patchwork;
 import party.stoat.patchwork.block.sf_controller.MultiEnergyHandler;
 import party.stoat.patchwork.patchgraph.*;
@@ -65,7 +65,7 @@ public class SFSystemPowerNode extends Node {
     }
 
     @Override
-    public @Nullable EnergyStorage getEnergyHandler(ServerLevel level, NodeDescriptor.IO port, PatchInstance graph) {
+    public @Nullable IEnergyStorage getEnergyHandler(ServerLevel level, NodeDescriptor.IO port, PatchInstance graph) {
         var outputs = this.getOutputConnections(graph.graph);
 
         var handlers = outputs.stream().map(connection -> {
