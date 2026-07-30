@@ -3,6 +3,8 @@ package party.stoat.patchwork.patchgraph.nodes;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.kneelawk.graphlib.api.graph.BlockGraph;
+import mekanism.api.Action;
+import mekanism.api.chemical.ChemicalStack;
 import mekanism.api.chemical.IChemicalHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -63,117 +65,137 @@ public class VirtualizedBlockNode extends Node {
     public void tick(StorageConfiguration config, PatchInstance patchInstance, ServerLevel level, BlockGraph network, SFControllerBlockEntity entity) {
         var outputs = this.getOutputConnections(patchInstance.graph);
 
-        if(this.proxyPos == null) return;
+        if (this.proxyPos == null) return;
 
         var descriptor = this.getDescriptor();
 
-        for(var connection : outputs) {
+        for (var connection : outputs) {
             var connectedNode = patchInstance.nodes.get(connection.to());
             var port = descriptor.getPort(connection.keyFrom());
-            if(connectedNode == null) continue;
+            if (connectedNode == null) continue;
             var foreignPort = connectedNode.getDescriptor().getPort(connection.keyTo());
 
-            switch(port.d().d()) {
+            switch (port.d().d()) {
                 case Chemical -> {
-                    if(!ModList.get().isLoaded("mekanism")) continue;
+                    if (!ModList.get().isLoaded("mekanism")) continue;
 
-                    var storage = level.getCapability(mekanism.common.capabilities.Capabilities.CHEMICAL.block(), this.proxyPos, port.direction().orElse(null));
+                    var storage = getChemicalHandler(level, port, patchInstance);
                     var foreignStorage = connectedNode.getChemicalHandler(level, foreignPort, patchInstance);
+                    if (storage == null || foreignStorage == null) continue;
 
-                    if(foreignStorage == null) continue;
+                    for (int localIndex = 0; localIndex < storage.getChemicalTanks(); localIndex++) {
+                        ChemicalStack resource = storage.getChemicalInTank(localIndex);
+                        if (resource.isEmpty()) continue;
 
-                    if(storage != null) try(Transaction transaction = Transaction.open(context)) {
+                        for (int foreignIndex = 0; foreignIndex < foreignStorage.getChemicalTanks(); foreignIndex++) {
+                            // Simulate extraction
+                            ChemicalStack extracted = storage.extractChemical(localIndex, resource.getAmount(), Action.SIMULATE);
 
-                        for(int localIndex=0;localIndex<storage.size();localIndex++) {
-                            var resource = storage.getResource(localIndex);
-                            if(resource.isEmpty()) continue;
+                            if (extracted.isEmpty()) continue;
 
-                            for(int foreignIndex=0;foreignIndex<foreignStorage.size();foreignIndex++) {
-                                succeedAll: try(Transaction inner = Transaction.open(transaction)) {
+                            // Simulate insertion
+                            ChemicalStack remainder = foreignStorage.insertChemical(foreignIndex, extracted, Action.SIMULATE);
+                            long insertedAmount = extracted.getAmount() - remainder.getAmount();
+                            if (insertedAmount <= 0) continue;
 
-                                    int toInsert = 0;
+                            // Extract only what can fit
+                            ChemicalStack toTransfer = extracted.copy();
+                            toTransfer.setAmount(insertedAmount);
 
-                                    try(Transaction initial = Transaction.open(inner)) {
-                                        var extracted = storage.extract(resource, storage.getCapacityAsInt(foreignIndex, resource), initial);
-                                        var inserted = foreignStorage.insert(resource, extracted, initial);
+                            // Execute extraction
+                            ChemicalStack actualExtracted = storage.extractChemical(localIndex, insertedAmount, Action.EXECUTE);
+                            if (actualExtracted.isEmpty())
+                                continue;
 
-                                        if(inserted < extracted) {
-                                            toInsert = inserted;
-                                        } else if(inserted == extracted) {
-                                            initial.commit();
-                                            inner.commit();
-                                            break succeedAll;
-                                        }
-                                    }
-
-                                    var extracted = storage.extract(foreignIndex, resource, toInsert, inner);
-                                    var inserted = foreignStorage.insert(resource, toInsert, inner);
-
-                                    if(inserted == extracted) inner.commit();
-                                }
+                            // Execute insertion
+                            ChemicalStack insertRemainder = foreignStorage.insertChemical(foreignIndex, actualExtracted, Action.EXECUTE);
+                            // Normally this should be empty unless the machine changed between calls
+                            if (!insertRemainder.isEmpty()) {
+                                // optional: handle failed remainder
                             }
 
+                            break;
                         }
-
-                        transaction.commit();
                     }
                 }
                 case Item -> {
-                    var storage = level.getCapability(Capabilities.Item.BLOCK, this.proxyPos, port.direction().orElse(null));
 
-                    if(storage != null) try(Transaction transaction = Transaction.open(context)) {
+                    var storage = getItemHandler(level, port, patchInstance);
 
-                        for(int i=0;i<storage.size();i++) {
-                            try(Transaction actualAttempt = Transaction.open(transaction)) {
-                                var toExtract = 0;
+                    var target = connectedNode.getItemHandler(level, foreignPort, patchInstance);
 
-                                var resource = storage.getResource(i);
-                                if(resource.isEmpty()) continue;
+                    if (storage == null || target == null)
+                        continue;
 
-                                var foreignStorage = connectedNode.getItemHandler(level, foreignPort, patchInstance);
-                                if(foreignStorage == null) continue;
 
-                                try(Transaction inner = Transaction.open(actualAttempt)) {
-                                    toExtract = storage.extract(resource, 9999, inner);
-                                }
+                    for (int slot = 0; slot < storage.getSlots(); slot++) {
 
-                                var inserted = foreignStorage.insert(resource, toExtract, actualAttempt);
-                                var extracted = storage.extract(resource, inserted, actualAttempt);
+                        var stack = storage.getStackInSlot(slot);
 
-                                if(inserted == extracted) actualAttempt.commit();
-                            }
-                        }
+                        if (stack.isEmpty())
+                            continue;
 
-                        transaction.commit();
+
+                        // simulate insertion
+                        var remainder = target.insertItem(0, stack, true);
+
+                        int amount = stack.getCount() - remainder.getCount();
+
+                        if (amount <= 0)
+                            continue;
+
+
+                        // actually extract
+                        var extracted = storage.extractItem(slot, amount, false);
+
+                        if (extracted.isEmpty())
+                            continue;
+
+
+                        // actually insert
+                        target.insertItem(0, extracted, false);
                     }
                 }
                 case Fluid -> {
-                    var storage = level.getCapability(Capabilities.Fluid.BLOCK, this.proxyPos, port.direction().orElse(null));
 
-                    if(storage != null) try(Transaction transaction = Transaction.open(context)) {
+                    var storage = getFluidHandler(level, port, patchInstance);
+                    var target = connectedNode.getFluidHandler(level, foreignPort, patchInstance);
 
-                        for(int i=0;i<storage.size();i++) {
-                            try(Transaction actualAttempt = Transaction.open(transaction)) {
-                                var toExtract = 0;
+                    if(storage == null || target == null)
+                        continue;
 
-                                var resource = storage.getResource(i);
-                                if(resource.isEmpty()) continue;
 
-                                var foreignStorage = connectedNode.getFluidHandler(level, foreignPort, patchInstance);
-                                if(foreignStorage == null) continue;
+                    for(int tank = 0; tank < storage.getTanks(); tank++) {
 
-                                try(Transaction inner = Transaction.open(actualAttempt)) {
-                                    toExtract = storage.extract(resource, 9999, inner);
-                                }
+                        var fluid = storage.getFluidInTank(tank);
 
-                                var inserted = foreignStorage.insert(resource, toExtract, actualAttempt);
-                                var extracted = storage.extract(resource, inserted, actualAttempt);
+                        if(fluid.isEmpty())
+                            continue;
 
-                                if(inserted == extracted) actualAttempt.commit();
-                            }
+
+                        var simulated = fluid.copy();
+
+                        int accepted =
+                                target.fill(simulated, IFluidHandler.FluidAction.SIMULATE);
+
+
+                        if(accepted <= 0)
+                            continue;
+
+
+                        var extracted =
+                                storage.drain(
+                                        fluid.copyWithAmount(accepted),
+                                        IFluidHandler.FluidAction.EXECUTE
+                                );
+
+
+                        if(!extracted.isEmpty()) {
+                            target.fill(
+                                    extracted,
+                                    IFluidHandler.FluidAction.EXECUTE
+                            );
                         }
-
-                        transaction.commit();
                     }
                 }
                 case Energy -> {

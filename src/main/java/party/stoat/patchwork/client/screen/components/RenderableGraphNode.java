@@ -180,7 +180,7 @@ public class RenderableGraphNode extends Renderable {
     }
 
     @Override
-    public boolean charTyped(char c, EditorScreen.EditorState state) {
+    public boolean charTyped(char c, int keyCode, EditorScreen.EditorState state) {
         this.nameInput.editBox.setResponder(val -> {
             if (this.configuringNode) {
                 this.descriptor = NodeDescriptor.ofName(val, this.descriptor);
@@ -348,7 +348,7 @@ public class RenderableGraphNode extends Renderable {
 
                 for (var i : this.descriptor.inputs()) {
                     this.inputs.elements.add(
-                            new NodeIOConfiguring(i.name(), i.key(), this.uuid, false, false, i.d().d(), i.direction(), (_, _) -> this.inputs.elements.removeIf(
+                            new NodeIOConfiguring(i.name(), i.key(), this.uuid, false, false, i.d().d(), i.direction(), (btn1, state1) -> this.inputs.elements.removeIf(
                                     e -> e instanceof NodeIOConfiguring io && io.port.key.equals(i.key())
                             ))
                     );
@@ -356,16 +356,16 @@ public class RenderableGraphNode extends Renderable {
 
                 for (var o : this.descriptor.outputs()) {
                     this.outputs.elements.add(
-                            new NodeIOConfiguring(o.name(), o.key(), this.uuid, true, false, o.d().d(), o.direction(), (_, _) -> this.outputs.elements.removeIf(
+                            new NodeIOConfiguring(o.name(), o.key(), this.uuid, true, false, o.d().d(), o.direction(), (btn2, state2) -> this.outputs.elements.removeIf(
                                     e -> e instanceof NodeIOConfiguring io && io.port.key.equals(o.key())
                             ))
                     );
                 }
 
-                var btn1 = new ImageButton(ImageButton.PLUS, 16, 16, (btn, _) -> {
+                var btn1 = new ImageButton(ImageButton.PLUS, 16, 16, (btn, stat1) -> {
                     var key = UUID.randomUUID().toString();
                     this.inputs.elements.add(this.inputs.elements.size() - 1,
-                            new NodeIOConfiguring("Unnamed input", key, this.uuid, false, false, NodeDescriptor.DataType.Item, Optional.of(Direction.NORTH), (_, _) -> this.inputs.elements.removeIf(
+                            new NodeIOConfiguring("Unnamed input", key, this.uuid, false, false, NodeDescriptor.DataType.Item, Optional.of(Direction.NORTH), (btn3, state3) -> this.inputs.elements.removeIf(
                                     e -> e instanceof NodeIOConfiguring io && io.port.key.equals(key)
                             ))
                     );
@@ -373,10 +373,10 @@ public class RenderableGraphNode extends Renderable {
 
                 this.inputs.elements.add(btn1);
 
-                var btn2 = new ImageButton(ImageButton.PLUS, 16, 16, (btn, _) -> {
+                var btn2 = new ImageButton(ImageButton.PLUS, 16, 16, (btn, stt) -> {
                     var key = UUID.randomUUID().toString();
                     this.outputs.elements.add(this.outputs.elements.size() - 1,
-                            new NodeIOConfiguring("Unnamed output", key, this.uuid, false, false, NodeDescriptor.DataType.Item, Optional.of(Direction.NORTH), (_, _) -> this.outputs.elements.removeIf(
+                            new NodeIOConfiguring("Unnamed output", key, this.uuid, false, false, NodeDescriptor.DataType.Item, Optional.of(Direction.NORTH), (btn4, state4) -> this.outputs.elements.removeIf(
                                     e -> e instanceof NodeIOConfiguring io && io.port.key.equals(key)
                             ))
                     );

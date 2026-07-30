@@ -13,7 +13,7 @@ import java.util.HashSet;
 public class MachineLevelSavedData extends SavedData {
 
     private int count;
-    public HashSet<BlockPos> virtualized;
+    public HashSet<BlockPos> virtualized = new HashSet<>();
 
     public MachineLevelSavedData() { }
 

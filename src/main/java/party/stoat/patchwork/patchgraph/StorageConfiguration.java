@@ -16,6 +16,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -119,7 +121,7 @@ public class StorageConfiguration {
 
         descriptorProvider.put(
                 AbstractFurnaceBlockEntity.class,
-                (config, block, formatter, _, i) ->
+                (config, block, formatter, be, i) ->
                         new NodeDescriptor(
                                 formatter.apply(block.getName().getString()),
                                 List.of(
@@ -137,7 +139,7 @@ public class StorageConfiguration {
 
         descriptorProvider.put(
                 ChestBlockEntity.class,
-                (config, block, formatter, _, i) -> new NodeDescriptor(
+                (config, block, formatter, be, i) -> new NodeDescriptor(
                         formatter.apply(block.getName().getString()),
                         List.of(
                                 new NodeDescriptor.IO("In", "in", new NodeDescriptor.Data(NodeDescriptor.DataType.Item, false), Direction.UP)
@@ -164,17 +166,6 @@ public class StorageConfiguration {
 
         NodeDescriptor apply(String config, Block state, Function<String, String> formatter, BlockEntity entity, ResourceLocation identifier);
 
-    }
-
-    // todo: what sorcery is this?
-    public void save(ValueOutput output) {
-        var virts = output.childrenList("virtualized");
-
-        for (var pos : virtualized) {
-            virts.addChild().putLong("pos", pos.asLong());
-        }
-
-        output.putString("graphs", new Gson().toJson(this.graphs));
     }
 
     public static NodeDescriptor getDescriptorForBlock(ServerLevel level, BlockPos pos, Function<String, String> formatter, ServerPlayer player, ResourceLocation i, String config) {

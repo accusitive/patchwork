@@ -48,9 +48,9 @@ public abstract class Renderable {
             this.r.onKeyDown(key, scancode, mods);
         }
 
-        public boolean charTyped(char c, EditorScreen.EditorState state) {
-            this.children.forEach(character -> character.charTyped(c, state));
-            this.r.charTyped(c, state);
+        public boolean charTyped(char c, int keyCode, EditorScreen.EditorState state) {
+            this.children.forEach(character -> character.charTyped(c, keyCode, state));
+            this.r.charTyped(c, keyCode, state);
 
             return true;
         }
@@ -117,7 +117,7 @@ public abstract class Renderable {
         }
     }
 
-    public boolean charTyped(char c, EditorScreen.EditorState state) {
+    public boolean charTyped(char c, int keyCode, EditorScreen.EditorState state) {
         return false;
     }
 

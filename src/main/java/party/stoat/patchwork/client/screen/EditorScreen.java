@@ -54,7 +54,7 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> impl
     private Renderable rightSidebar;
     private Renderable leftSidebar;
     private ScissorNode canvas;
-    private Renderable saveButton = new ImageButton(ImageButton.SAVE, 28, 28, (_, _) -> this.save());
+    private Renderable saveButton = new ImageButton(ImageButton.SAVE, 28, 28, (btn, state) -> this.save());
 
     public EditorScreen(SFControllerMenu menu, Inventory inventory, Component component) {
         super(menu, inventory, component);
@@ -116,9 +116,9 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> impl
     }
 
     @Override
-    public boolean charTyped(char c, int state) {
+    public boolean charTyped(char c, int keyCode) {
         if(this.lastLayout != null) {
-            this.lastLayout.charTyped(c, this.state);
+            this.lastLayout.charTyped(c, keyCode, state);
         }
 
         return true;
@@ -351,7 +351,7 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> impl
         List<Renderable> otherButtons = new ArrayList<>();
 
         for(var graph : this.state.patchGraphs) {
-            var button = new ImageButton(this.state.getCurrentGraph() == graph ? ImageButton.SCHEMATIC_BUTTON_ACTIVE : ImageButton.SCHEMATIC_BUTTON, 150, 25, (btn, _) -> {
+            var button = new ImageButton(this.state.getCurrentGraph() == graph ? ImageButton.SCHEMATIC_BUTTON_ACTIVE : ImageButton.SCHEMATIC_BUTTON, 150, 25, (btn, state) -> {
                 for(var el : patchSelectButtons) {
                     if(el instanceof ImageButton b) b.image = ImageButton.SCHEMATIC_BUTTON;
                 }
@@ -366,7 +366,7 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> impl
             patchSelectButtons.add(button);
         }
 
-        otherButtons.add(new ImageButton(ImageButton.PLUS, 24, 24, (_, _) -> {
+        otherButtons.add(new ImageButton(ImageButton.PLUS, 24, 24, (btn, state) -> {
             PacketDistributor.sendToServer(new CreatePatchServerboundPayload(
                     this.state.controllerPos
             ));
@@ -484,24 +484,24 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> impl
 
         if(lines.isEmpty()) return;
 
-        graphics.submitGuiElementRenderState(new BezierCurveRenderState(lines));
+        BezierCurveRenderer.render(graphics, lines);
     }
 
     @Override
-    public void extractRenderState(@NonNull GuiGraphics graphics, int mouseX, int mouseY, float a) {
+    public void render(@NonNull GuiGraphics graphics, int mouseX, int mouseY, float a) {
         this.drawEffects(graphics, mouseX, mouseY);
 
         if(this.lastLayout != null) this.lastLayout.paint(graphics);
 
         if(this.root != null) {
             if(state.editorDirty) {
-                this.lastLayout = new Many(List.of(this.root, saveButton)).extractLayout(0, 0);
-            } else this.lastLayout = this.root.extractLayout(0, 0);
+                this.lastLayout = new Many(List.of(this.root, saveButton)).extractLayout(0, 0, 0);
+            } else this.lastLayout = this.root.extractLayout(0, 0, 0);
         }
 
         int tl = this.leftPos - 8;
         int tp = this.topPos - 9;
-        graphics.blit(CONTAINER_TEXTURE, tl, tp, tl + 256, tp + 256, 0.0F, 1.0F, 0.0F, 1.0F);
-        super.extractRenderState(graphics, mouseX, mouseY, a);
+        graphics.blit(CONTAINER_TEXTURE, tl, tp, tl + 256, tp + 256, 0, 1, 0, 1);
+        super.render(graphics, mouseX, mouseY, a);
     }
 }
