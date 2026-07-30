@@ -1,12 +1,14 @@
 package party.stoat.patchwork.virtual;
 
 import net.minecraft.world.level.ChunkPos;
-import org.jspecify.annotations.Nullable;
+
+import javax.annotation.Nullable;
 
 public interface PlayerVirtualTrackedChunk {
 
     void patchwork$setChunk(@Nullable ChunkPos pos);
 
-    @Nullable ChunkPos patchwork$getChunk();
+    @Nullable
+    ChunkPos patchwork$getChunk();
 
 }

@@ -14,18 +14,19 @@ import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.redstone.Orientation;
 import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import party.stoat.patchwork.Patchwork;
 import party.stoat.patchwork.block.SFNetworkConnectable;
+import party.stoat.patchwork.block.ShapeUtils;
 import party.stoat.patchwork.graphlib.SFCableNode;
 
+import javax.annotation.Nullable;
 import java.util.List;
+import java.util.Map;
 
 public class SFCable extends Block implements SFNetworkConnectable {
 
@@ -54,18 +55,18 @@ public class SFCable extends Block implements SFNetworkConnectable {
     }
 
     @Override
-    protected void updateIndirectNeighbourShapes(@NonNull BlockState state, @NonNull LevelAccessor level, @NonNull BlockPos pos, @UpdateFlags int updateFlags, int updateLimit) {
+    protected void updateIndirectNeighbourShapes(@NonNull BlockState state, @NonNull LevelAccessor level, @NonNull BlockPos pos, int updateFlags, int updateLimit) {
         if(level instanceof ServerLevel serverLevel) {
             Patchwork.UNIVERSE.getGraphWorld(serverLevel).updateNodes(pos);
         }
     }
 
     @Override
-    protected @NonNull VoxelShape getOcclusionShape(BlockState state) {
+    protected @NonNull VoxelShape getOcclusionShape(BlockState state, BlockGetter getter, BlockPos pos) {
         VoxelShape shape = Shapes.create(7.0 / 16.0, 7.0 / 16.0, 7.0 / 16.0, 9.0 / 16.0, 9.0 / 16.0, 9.0 / 16.0);
         VoxelShape part = Shapes.create(7.0 / 16.0, 7.0 / 16.0, 0.0, 9.0 / 16.0, 9.0 / 16.0, 7.0 / 16.0);
 
-        var parts = Shapes.rotateAll(part);
+        var parts = ShapeUtils.rotateAll(part);
 
         if(state.getValue(NORTH)) shape = Shapes.join(shape, parts.get(Direction.NORTH), BooleanOp.OR);
         if(state.getValue(EAST)) shape = Shapes.join(shape, parts.get(Direction.EAST), BooleanOp.OR);
@@ -79,17 +80,17 @@ public class SFCable extends Block implements SFNetworkConnectable {
 
     @Override
     protected @NonNull VoxelShape getVisualShape(@NonNull BlockState state, @NonNull BlockGetter level, @NonNull BlockPos pos, @NonNull CollisionContext context) {
-        return this.getOcclusionShape(state);
+        return this.getOcclusionShape(state, level, pos);
     }
 
     @Override
     protected @NonNull VoxelShape getCollisionShape(@NonNull BlockState state, @NonNull BlockGetter level, @NonNull BlockPos pos, @NonNull CollisionContext context) {
-        return this.getOcclusionShape(state);
+        return this.getOcclusionShape(state, level, pos);
     }
 
     @Override
     protected @NonNull VoxelShape getShape(@NonNull BlockState state, @NonNull BlockGetter level, @NonNull BlockPos pos, @NonNull CollisionContext context) {
-        return this.getOcclusionShape(state);
+        return this.getOcclusionShape(state, level, pos);
     }
 
     @Override
@@ -116,7 +117,7 @@ public class SFCable extends Block implements SFNetworkConnectable {
     }
 
     @Override
-    protected void neighborChanged(@NonNull BlockState state, Level level, @NonNull BlockPos pos, @NonNull Block block, @Nullable Orientation orientation, boolean movedByPiston) {
+    protected void neighborChanged(@NonNull BlockState state, Level level, @NonNull BlockPos pos, @NonNull Block block, @NonNull BlockPos pos1, boolean movedByPiston) {
         level.setBlockAndUpdate(pos, this.findConnections(level, state, pos));
     }
 

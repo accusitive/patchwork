@@ -1,7 +1,6 @@
 package party.stoat.patchwork.client.screen.components;
 
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.util.ARGB;
+import net.minecraft.client.gui.GuiGraphics;
 import party.stoat.patchwork.client.screen.EditorScreen;
 
 import java.util.List;
@@ -35,8 +34,8 @@ public abstract class AbstractButton extends Renderable {
     }
 
     @Override
-    protected Layout extractInnerLayout(int x, int y) {
-        return new Layout(x, y, this.width, this.height, this, List.of(), false);
+    protected Layout extractInnerLayout(int x, int y, int z) {
+        return new Layout(x, y, z, this.width, this.height, this, List.of(), false);
     }
 
 }

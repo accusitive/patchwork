@@ -1,10 +1,11 @@
 package party.stoat.patchwork.client.screen.components;
 
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.input.CharacterEvent;
-import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.events.GuiEventListener;
 import org.joml.Matrix3x2f;
+import org.joml.Matrix4f;
 import org.joml.Vector2f;
+import org.joml.Vector4f;
 import party.stoat.patchwork.client.screen.EditorScreen;
 
 import java.util.List;
@@ -17,45 +18,46 @@ public abstract class Renderable {
 
     public int absX;
     public int absY;
+    public int absZ;
 
-    public record Layout(int x, int y, int width, int height, Renderable r, List<Layout> children, boolean disabled, boolean scissor, float scale) {
+    public record Layout(int x, int y, int z, int width, int height, Renderable r, List<Layout> children, boolean disabled, boolean scissor, float scale) {
 
-        public Layout(int x, int y, int width, int height, Renderable r, List<Layout> children, boolean disabled, boolean scissor) {
-            this(x, y, width, height, r, children, disabled, scissor, 1.0f);
+        public Layout(int x, int y, int z, int width, int height, Renderable r, List<Layout> children, boolean disabled, boolean scissor) {
+            this(x, y, z, width, height, r, children, disabled, scissor, 1.0f);
         }
 
-        public Layout(int x, int y, int width, int height, Renderable r, List<Layout> children, boolean disabled) {
-            this(x, y, width, height, r, children, disabled, true, 1.0f);
+        public Layout(int x, int y, int z, int width, int height, Renderable r, List<Layout> children, boolean disabled) {
+            this(x, y, z, width, height, r, children, disabled, true, 1.0f);
         }
 
-        public void paint(GuiGraphicsExtractor g) {
+        public void paint(GuiGraphics g) {
 //            g.pose().translate(this.x() / this.scale, this.y() / this.scale);
-            g.pose().pushMatrix();
-            g.pose().scale(this.scale());
-            var mat = g.pose().translate(this.x, this.y);
+            g.pose().pushPose();
+            g.pose().scale(scale, scale, scale);
+            g.pose().translate(this.x, this.y, this.z);
             if(this.scissor) g.enableScissor(0, 0, this.width, this.height);
-            this.r.paint(g, this, mat);
+            this.r.paint(g, this);
             this.children.forEach(c -> c.paint(g));
             if(this.scissor) g.disableScissor();
-            g.pose().popMatrix();
+            g.pose().popPose();
 //            g.pose().popMatrix();
         }
 
-        public void onKeyDown(KeyEvent event) {
-            this.children.forEach(c -> c.onKeyDown(event));
-            this.r.onKeyDown(event);
+        public void onKeyDown(int key, int scancode, int mods) {
+            this.children.forEach(c -> c.onKeyDown(key, scancode, mods));
+            this.r.onKeyDown(key, scancode, mods);
         }
 
-        public boolean charTyped(CharacterEvent event, EditorScreen.EditorState state) {
-            this.children.forEach(c -> c.charTyped(event, state));
-            this.r.charTyped(event, state);
+        public boolean charTyped(char c, EditorScreen.EditorState state) {
+            this.children.forEach(character -> character.charTyped(c, state));
+            this.r.charTyped(c, state);
 
             return true;
         }
 
-        public void onKeyUp(KeyEvent event) {
-            this.children.forEach(c -> c.onKeyUp(event));
-            this.r.onKeyUp(event);
+        public void onKeyUp(int key, int scancode, int mods) {
+            this.children.forEach(c -> c.onKeyUp(key, scancode, mods));
+            this.r.onKeyUp(key, scancode, mods);
         }
 
         public boolean contains(double x, double y) {
@@ -115,7 +117,7 @@ public abstract class Renderable {
         }
     }
 
-    public boolean charTyped(CharacterEvent event, EditorScreen.EditorState state) {
+    public boolean charTyped(char c, EditorScreen.EditorState state) {
         return false;
     }
 
@@ -125,9 +127,9 @@ public abstract class Renderable {
 
     public void onMouseDownGlobal(double x, double y, EditorScreen.EditorState state) {}
 
-    public void onKeyDown(KeyEvent event) {}
+    public void onKeyDown(int key, int scancode, int mods) {}
 
-    public void onKeyUp(KeyEvent event) {}
+    public void onKeyUp(int key, int scancode, int mods) {}
 
     public void onScroll(double x, double y, double scrollX, double scrollY) {}
 
@@ -137,17 +139,21 @@ public abstract class Renderable {
         return false;
     }
 
-    public void paint(GuiGraphicsExtractor g, Layout l, Matrix3x2f mat) {
-        var point = mat.transformPosition(new Vector2f(this.offsetX, this.offsetY));
-        this.absX = (int) point.x;
-        this.absY = (int) point.y;
+    public void paint(GuiGraphics g, Layout l) {
+        Matrix4f matrix = g.pose().last().pose();
+
+        Vector4f point = new Vector4f(offsetX, offsetY, 0.0f, 1.0f);
+        point.mul(matrix);
+
+        absX = (int) point.x();
+        absY = (int) point.y();
     }
 
-    public Layout extractLayout(int x, int y) {
-        this.layoutCache = this.extractInnerLayout(x + this.offsetX, y + this.offsetY);
+    public Layout extractLayout(int x, int y, int z) {
+        this.layoutCache = this.extractInnerLayout(x + this.offsetX, y + this.offsetY, z);
         return layoutCache;
     }
 
-    protected abstract Layout extractInnerLayout(int x, int y);
+    protected abstract Layout extractInnerLayout(int x, int y, int z);
 
 }

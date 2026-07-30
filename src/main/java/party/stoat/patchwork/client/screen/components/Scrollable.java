@@ -1,7 +1,7 @@
 package party.stoat.patchwork.client.screen.components;
 
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.util.ARGB;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.util.FastColor;
 import org.joml.Matrix3x2f;
 import party.stoat.patchwork.client.screen.EditorScreen;
 
@@ -40,8 +40,8 @@ public class Scrollable<T extends Renderable> extends Renderable {
     }
 
     @Override
-    public void paint(GuiGraphicsExtractor g, Layout l, Matrix3x2f mat) {
-        super.paint(g, l, mat);
+    public void paint(GuiGraphics g, Layout l) {
+        super.paint(g, l);
 
         int maxScroll = -Math.max(0, this.child.layoutCache.height() - this.height);
 
@@ -59,13 +59,13 @@ public class Scrollable<T extends Renderable> extends Renderable {
 //        int y0 = l.y();
 //        int y1 = l.y() + 100;
 
-        g.fill(this.width - 1, y0, this.width, y1, ARGB.color(255, col, col, col));
+        g.fill(this.width - 1, y0, this.width, y1, FastColor.ARGB32.color(255, col, col, col));
     }
 
     @Override
-    protected Layout extractInnerLayout(int x, int y) {
-        var l = this.scissor.extractLayout(0, 0);
-        return new Layout(l.x(), l.y(), l.x() + this.width, l.y() + this.height, this, List.of(l), false);
+    protected Layout extractInnerLayout(int x, int y, int z) {
+        var l = this.scissor.extractLayout(0, 0, 0);
+        return new Layout(l.x(), l.y(), l.z(), l.x() + this.width, l.y() + this.height, this, List.of(l), false);
     }
 
 }

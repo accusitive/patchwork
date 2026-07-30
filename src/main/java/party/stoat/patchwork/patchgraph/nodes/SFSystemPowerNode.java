@@ -1,34 +1,28 @@
 package party.stoat.patchwork.patchgraph.nodes;
 
 import com.kneelawk.graphlib.api.graph.BlockGraph;
-import mekanism.api.chemical.ChemicalResource;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.neoforged.neoforge.transfer.ResourceHandler;
-import net.neoforged.neoforge.transfer.energy.EnergyHandler;
-import net.neoforged.neoforge.transfer.fluid.FluidResource;
-import net.neoforged.neoforge.transfer.item.ItemResource;
-import net.neoforged.neoforge.transfer.transaction.Transaction;
-import net.neoforged.neoforge.transfer.transaction.TransactionContext;
-import org.jspecify.annotations.Nullable;
+import net.neoforged.neoforge.energy.IEnergyStorage;
 import party.stoat.patchwork.Patchwork;
 import party.stoat.patchwork.block.sf_controller.MultiEnergyHandler;
 import party.stoat.patchwork.patchgraph.*;
 import party.stoat.patchwork.block.sf_controller.SFControllerBlockEntity;
 
+import javax.annotation.Nullable;
 import java.util.Objects;
 import java.util.UUID;
 
 public class SFSystemPowerNode extends Node {
 
-    public static final Identifier IDENTIFIER = Identifier.fromNamespaceAndPath(Patchwork.MOD_ID, "patch_nodes/system_power");
+    public static final ResourceLocation IDENTIFIER = ResourceLocation.fromNamespaceAndPath(Patchwork.MOD_ID, "patch_nodes/system_power");
 
     public SFSystemPowerNode(UUID uuid, NodeDescriptor descriptor) {
         super(uuid, descriptor);
     }
 
     @Override
-    public void tick(StorageConfiguration config, PatchInstance patch, ServerLevel level, BlockGraph network, TransactionContext context, SFControllerBlockEntity controller) {
+    public void tick(StorageConfiguration config, PatchInstance patch, ServerLevel level, BlockGraph network, SFControllerBlockEntity controller) {
 //        var outputs = this.getOutputConnections(patch.graph);
 //
 //        for(var connection : outputs) {
@@ -71,7 +65,7 @@ public class SFSystemPowerNode extends Node {
     }
 
     @Override
-    public @Nullable EnergyHandler getEnergyHandler(ServerLevel level, NodeDescriptor.IO port, PatchInstance graph) {
+    public @Nullable IEnergyStorage getEnergyHandler(ServerLevel level, NodeDescriptor.IO port, PatchInstance graph) {
         var outputs = this.getOutputConnections(graph.graph);
 
         var handlers = outputs.stream().map(connection -> {
@@ -87,7 +81,7 @@ public class SFSystemPowerNode extends Node {
     }
 
     @Override
-    public Identifier getIdentifier() {
+    public ResourceLocation getIdentifier() {
         return IDENTIFIER;
     }
 

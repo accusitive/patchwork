@@ -7,7 +7,7 @@ import com.kneelawk.graphlib.api.util.HalfLink;
 import com.kneelawk.graphlib.api.util.NodePos;
 import com.kneelawk.graphlib.api.wire.FullWireBlockNode;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.DirectionalBlock;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +19,7 @@ import java.util.List;
 public class SFInterfaceNode implements FullWireBlockNode {
 
     public static final SFInterfaceNode INSTANCE = new SFInterfaceNode();
-    public static final BlockNodeType TYPE = BlockNodeType.of(Identifier.fromNamespaceAndPath(Patchwork.MOD_ID, "sf_interface"), () -> INSTANCE);
+    public static final BlockNodeType TYPE = BlockNodeType.of(ResourceLocation.fromNamespaceAndPath(Patchwork.MOD_ID, "sf_interface"), () -> INSTANCE);
 
     @Override
     public @NotNull BlockNodeType getType() {

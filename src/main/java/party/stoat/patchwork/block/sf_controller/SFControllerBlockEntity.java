@@ -3,7 +3,9 @@ package party.stoat.patchwork.block.sf_controller;
 import com.kneelawk.graphlib.api.graph.BlockGraph;
 import com.kneelawk.graphlib.api.util.NodePos;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -20,22 +22,19 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.ticks.ContainerSingleItem;
-import net.neoforged.neoforge.transfer.energy.EnergyHandler;
-import net.neoforged.neoforge.transfer.energy.SimpleEnergyHandler;
-import net.neoforged.neoforge.transfer.transaction.Transaction;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
+import net.neoforged.neoforge.energy.EnergyStorage;
+import net.neoforged.neoforge.energy.IEnergyStorage;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import party.stoat.patchwork.MyBlocks;
 import party.stoat.patchwork.Patchwork;
-import party.stoat.patchwork.patchgraph.StorageConfiguration;
 import party.stoat.patchwork.block.SFEnergyHandler;
+import party.stoat.patchwork.patchgraph.StorageConfiguration;
 import party.stoat.patchwork.patchgraph.nodes.SFSystemPowerNode;
 import party.stoat.patchwork.patchgraph.nodes.VirtualizedBlockNode;
 import party.stoat.patchwork.graphlib.SFControllerNode;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -46,7 +45,7 @@ public class SFControllerBlockEntity extends BlockEntity implements MenuProvider
     private ItemStack theItem = ItemStack.EMPTY;
     private List<ItemStack> spawnIn = new ArrayList<>();
 
-    public SimpleEnergyHandler selfStorage = new SimpleEnergyHandler(10000, 1000, 10);
+    public EnergyStorage selfStorage = new EnergyStorage(10000, 1000, 10);
     public MultiEnergyHandler handler = new MultiEnergyHandler(List.of());
 
     public HashSet<BlockPos> loaded = new HashSet<>();
@@ -73,7 +72,7 @@ public class SFControllerBlockEntity extends BlockEntity implements MenuProvider
 
         if(sfNetworkGraph == null) return;
 
-        if(entity.selfStorage.getAmountAsLong() > 0) {
+        if(entity.selfStorage.getEnergyStored() > 0) {
             if(!blockState.getValue(SFController.POWERED)) {
                 level.setBlockAndUpdate(blockPos, blockState.setValue(SFController.POWERED, true));
             }
@@ -109,7 +108,7 @@ public class SFControllerBlockEntity extends BlockEntity implements MenuProvider
 
         //Find energy handlers
 
-        List<EnergyHandler> energyHandlers = new ArrayList<>();
+        List<IEnergyStorage> energyHandlers = new ArrayList<>();
         energyHandlers.add(entity.selfStorage);
 
         for(var config : configs) {
@@ -125,20 +124,16 @@ public class SFControllerBlockEntity extends BlockEntity implements MenuProvider
 
         entity.handler.handlers = energyHandlers;
 
-        outer: try(Transaction transaction = Transaction.openRoot()) {
             for(var sfNode : sfNetworkGraph.getNodes().toList()) {
                 if(sfNode.getBlockState().getBlock() instanceof SFEnergyHandler energyHandler) {
                     var desired = energyHandler.desiredAmount();
-                    var extractedAmount = entity.selfStorage.extract(desired, transaction);
+                    var extractedAmount = entity.selfStorage.extractEnergy(desired, false);
 
-                    if(extractedAmount < desired) break outer;
+                    if(extractedAmount < desired) break;
 
-                    energyHandler.insert(extractedAmount, transaction);
+                    energyHandler.receiveEnergy(extractedAmount, false);
                 }
             }
-
-            transaction.commit();
-        }
 
         for(var sfNode : sfNetworkGraph.getNodes().toList()) {
             if(sfNode.getBlockState().getBlock() instanceof SFEnergyHandler energyHandler) {
@@ -148,7 +143,7 @@ public class SFControllerBlockEntity extends BlockEntity implements MenuProvider
 
         if(!entity.spawnIn.isEmpty()) {
             for(ItemStack stack : entity.spawnIn) {
-                for(var i=0;i<stack.count();i++) {
+                for(var i=0;i<stack.getCount();i++) {
                     var id = UUID.randomUUID();
 
                     var pos = Patchwork.VIRTUAL_MANAGER.allocate(serverLevel, id, stack);
@@ -166,25 +161,15 @@ public class SFControllerBlockEntity extends BlockEntity implements MenuProvider
         for(var config : configs) {
             var nodeGraph = Patchwork.UNIVERSE.getGraphWorld(serverLevel).getGraphForNode(new NodePos(blockPos, SFControllerNode.INSTANCE));
 
-            outer: try(Transaction transaction = Transaction.openRoot()) {
                 for(var patchInstance : config.instances.values()) {
                     for(var node : patchInstance.nodes.values()) {
-                        try(Transaction inner = Transaction.open(transaction)) {
-                            node.tick(config, patchInstance, serverLevel, nodeGraph, inner, entity);
-                            var amount = entity.selfStorage.getAmountAsInt() - 10;
-                            entity.selfStorage.set(Math.max(amount, 0));
-
-                            if(amount >= 0) inner.commit();
-                            else {
-                                break outer;
-                            }
+                            node.tick(config, patchInstance, serverLevel, nodeGraph, entity);
+                            var amount = entity.selfStorage.getEnergyStored() - 10;
+                            // TODO: set -> receiveEnergy?
+                            entity.selfStorage.receiveEnergy(Math.max(amount, 0), false);
                         }
                     }
                 }
-
-                transaction.commit();
-            }
-        }
 
         if(!entity.spawnIn.isEmpty() && entity.watcher != null) {
             StorageConfiguration.syncToPlayer(configs, sfNetworkGraph, serverLevel, entity.watcher, blockPos);
@@ -215,20 +200,22 @@ public class SFControllerBlockEntity extends BlockEntity implements MenuProvider
     }
 
     @Override
-    protected void saveAdditional(@NonNull ValueOutput output) {
-        ContainerHelper.saveAllItems(output, NonNullList.of(theItem));
-        output.putInt("energy", this.selfStorage.getAmountAsInt());
+    protected void saveAdditional(@NonNull CompoundTag tag, HolderLookup.Provider provider) {
+        ContainerHelper.saveAllItems(tag, NonNullList.of(theItem), provider);
+        tag.put("energy", selfStorage.serializeNBT(provider));
 
-        super.saveAdditional(output);
+        super.saveAdditional(tag, provider);
     }
 
     @Override
-    protected void loadAdditional(@NonNull ValueInput input) {
-        ContainerHelper.loadAllItems(input, NonNullList.of(theItem));
+    protected void loadAdditional(@NonNull CompoundTag tag, HolderLookup.Provider provider) {
+        ContainerHelper.loadAllItems(tag, NonNullList.of(theItem), provider);
 
-        input.getInt("energy").ifPresent(e -> this.selfStorage.set(e));
+        if (tag.contains("energy")) {
+            selfStorage.deserializeNBT(provider, tag.get("energy"));
+        }
 
-        super.loadAdditional(input);
+        super.loadAdditional(tag, provider);
     }
 
     @Override

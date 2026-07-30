@@ -2,7 +2,9 @@ package party.stoat.patchwork.block.sf_drive;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.WorldlyContainer;
@@ -12,11 +14,10 @@ import net.minecraft.world.inventory.DispenserMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import party.stoat.patchwork.MyBlocks;
+
+import javax.annotation.Nullable;
 
 public class SFDriveBlockEntity extends BaseContainerBlockEntity implements WorldlyContainer {
 
@@ -27,17 +28,17 @@ public class SFDriveBlockEntity extends BaseContainerBlockEntity implements Worl
     }
 
     @Override
-    protected void saveAdditional(@NonNull ValueOutput output) {
-        ContainerHelper.saveAllItems(output, slots);
+    protected void saveAdditional(@NonNull CompoundTag output, HolderLookup.Provider provider) {
+        ContainerHelper.saveAllItems(output, slots, provider);
 
-        super.saveAdditional(output);
+        super.saveAdditional(output, provider);
     }
 
     @Override
-    protected void loadAdditional(@NonNull ValueInput input) {
-        ContainerHelper.loadAllItems(input, slots);
+    protected void loadAdditional(@NonNull CompoundTag input, HolderLookup.Provider provider) {
+        ContainerHelper.loadAllItems(input, slots, provider);
 
-        super.loadAdditional(input);
+        super.loadAdditional(input, provider);
     }
 
     @Override

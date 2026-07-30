@@ -2,17 +2,16 @@ package party.stoat.patchwork.client.screen.components;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
-import net.minecraft.util.ARGB;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FastColor;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec2;
-import net.neoforged.neoforge.client.network.ClientPacketDistributor;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.joml.Matrix3x2f;
 import party.stoat.patchwork.Patchwork;
 import party.stoat.patchwork.client.screen.EditorScreen;
@@ -62,7 +61,7 @@ public class RenderableGraphNode extends Renderable {
 
     boolean preview;
 
-    public static final Identifier VIRTUAL_NODE_IDENTIFIER = Identifier.fromNamespaceAndPath(Patchwork.MOD_ID, "virtual");
+    public static final ResourceLocation VIRTUAL_NODE_IDENTIFIER = ResourceLocation.fromNamespaceAndPath(Patchwork.MOD_ID, "virtual");
 
     public RenderableGraphNode(NodeDescriptor d, UUID u, boolean preview) {
         this.uuid = u;
@@ -84,7 +83,7 @@ public class RenderableGraphNode extends Renderable {
         this.outputs = new VerticalList<>(new ArrayList<>(), 4, true, false);
 
         this.openRemote = new ImageButton(EditorScreen.MAGNIFYING_GLASS_TEXTURE, 16, 16, (btn, state) -> {
-            ClientPacketDistributor.sendToServer(new OpenRemoteMachineServerboundPayload(uuid, state.controllerPos));
+            PacketDistributor.sendToServer(new OpenRemoteMachineServerboundPayload(uuid, state.controllerPos));
         });
 
         this.openRemote.paddingX = 3;
@@ -111,7 +110,7 @@ public class RenderableGraphNode extends Renderable {
             ports.put(o.key(), io);
         }
 
-        if (this.descriptor.identifier().equals(VIRTUAL_NODE_IDENTIFIER) || this.descriptor.identifier().equals(Identifier.fromNamespaceAndPath(Patchwork.MOD_ID, "interface"))) {
+        if (this.descriptor.identifier().equals(VIRTUAL_NODE_IDENTIFIER) || this.descriptor.identifier().equals(ResourceLocation.fromNamespaceAndPath(Patchwork.MOD_ID, "interface"))) {
             outputs.elements.add(this.openRemote);
         }
 
@@ -122,7 +121,7 @@ public class RenderableGraphNode extends Renderable {
                 BlockPos pos = new Gson().fromJson(this.descriptor.configuration(), new TypeToken<BlockPos>() {
                 }.getType());
                 if (pos != null) {
-                    ClientPacketDistributor.sendToServer(new EjectVirtualizedMachineServerboundPayload(state.controllerPos, pos));
+                    PacketDistributor.sendToServer(new EjectVirtualizedMachineServerboundPayload(state.controllerPos, pos));
                 }
 
                 state.selectedNodes.removeIf(
@@ -164,24 +163,24 @@ public class RenderableGraphNode extends Renderable {
     }
 
     @Override
-    public void paint(GuiGraphicsExtractor g, Layout l, Matrix3x2f mat) {
-        super.paint(g, l, mat);
+    public void paint(GuiGraphics g, Layout l) {
+        super.paint(g, l);
 
-        var borderFill = this.highlighted ? ARGB.color(255, 200, 200, 200) : ARGB.color(255, 60, 60, 60);
+        var borderFill = this.highlighted ? FastColor.ARGB32.color(255, 200, 200, 200) : FastColor.ARGB32.color(255, 60, 60, 60);
 
         g.fill(0, 0, l.width(), l.height(), borderFill);
-        g.fill(1, 1, l.width() - 1, l.height() - 1, ARGB.color(255, 35, 35, 35));
+        g.fill(1, 1, l.width() - 1, l.height() - 1, FastColor.ARGB32.color(255, 35, 35, 35));
         g.fill(1, 1, l.width() - 1, HEADER_HEIGHT, this.descriptor.color());
 
         if (descriptor.icon() != null) {
-            Item item = BuiltInRegistries.ITEM.get(descriptor.icon()).get().value();
+            Item item = BuiltInRegistries.ITEM.get(descriptor.icon()).asItem();
 
-            g.item(new ItemStack(item, 1), l.width() - 18, 2);
+            g.renderItem(new ItemStack(item, 1), l.width() - 18, 2);
         }
     }
 
     @Override
-    public boolean charTyped(CharacterEvent event, EditorScreen.EditorState state) {
+    public boolean charTyped(char c, EditorScreen.EditorState state) {
         this.nameInput.editBox.setResponder(val -> {
             if (this.configuringNode) {
                 this.descriptor = NodeDescriptor.ofName(val, this.descriptor);
@@ -399,7 +398,7 @@ public class RenderableGraphNode extends Renderable {
     }
 
     @Override
-    protected Layout extractInnerLayout(int dX, int dY) {
+    protected Layout extractInnerLayout(int dX, int dY, int dZ) {
         int w = 0;
         int h = 0;
 
@@ -410,12 +409,12 @@ public class RenderableGraphNode extends Renderable {
         var childLayouts = new ArrayList<Layout>();
 
         for (var c : this.children) {
-            var childLayout = c.extractLayout(0, 0);
+            var childLayout = c.extractLayout(0, 0, 0);
             childLayouts.add(childLayout);
             w = Math.max(w, childLayout.x() + childLayout.width());
             h = Math.max(h, childLayout.y() + childLayout.height());
         }
 
-        return new Layout(dX, dY, w, h, this, childLayouts, false);
+        return new Layout(dX, dY, dZ, w, h, this, childLayouts, false);
     }
 }

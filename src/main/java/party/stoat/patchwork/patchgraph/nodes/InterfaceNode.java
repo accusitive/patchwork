@@ -8,16 +8,15 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.transfer.ResourceHandler;
-import net.neoforged.neoforge.transfer.energy.EnergyHandler;
-import net.neoforged.neoforge.transfer.item.ItemResource;
-import net.neoforged.neoforge.transfer.transaction.TransactionContext;
-import org.jspecify.annotations.Nullable;
+import net.neoforged.neoforge.energy.EnergyStorage;
+import net.neoforged.neoforge.energy.IEnergyStorage;
+import net.neoforged.neoforge.items.IItemHandler;
 import party.stoat.patchwork.Patchwork;
 import party.stoat.patchwork.patchgraph.*;
 import party.stoat.patchwork.block.sf_controller.SFControllerBlockEntity;
 import party.stoat.patchwork.graphlib.SFInterfaceNode;
 
+import javax.annotation.Nullable;
 import java.util.UUID;
 
 public class InterfaceNode extends VirtualizedBlockNode {
@@ -31,19 +30,19 @@ public class InterfaceNode extends VirtualizedBlockNode {
     }
 
     @Override
-    public void tick(StorageConfiguration config, PatchInstance patchInstance, ServerLevel level, BlockGraph network, TransactionContext context, SFControllerBlockEntity controller) {
-        if(network.getNodeAt(new NodePos(this.config.interfacePos, SFInterfaceNode.INSTANCE)) != null) super.tick(config, patchInstance, level, network, context, controller);
+    public void tick(StorageConfiguration config, PatchInstance patchInstance, ServerLevel level, BlockGraph network, SFControllerBlockEntity controller) {
+        if(network.getNodeAt(new NodePos(this.config.interfacePos, SFInterfaceNode.INSTANCE)) != null) super.tick(config, patchInstance, level, network, controller);
     }
 
     @Override
-    public @Nullable ResourceHandler<ItemResource> getItemHandler(ServerLevel level, NodeDescriptor.IO port, PatchInstance graph) {
+    public @Nullable IItemHandler getItemHandler(ServerLevel level, NodeDescriptor.IO port, PatchInstance graph) {
         if(Patchwork.UNIVERSE.getGraphWorld(level).getNodeAt(new NodePos(this.config.interfacePos, SFInterfaceNode.INSTANCE)) != null) return super.getItemHandler(level, port, graph);
 
         return null;
     }
 
     @Override
-    public @Nullable EnergyHandler getEnergyHandler(ServerLevel level, NodeDescriptor.IO port, PatchInstance graph) {
+    public @Nullable IEnergyStorage getEnergyHandler(ServerLevel level, NodeDescriptor.IO port, PatchInstance graph) {
         if(Patchwork.UNIVERSE.getGraphWorld(level).getNodeAt(new NodePos(this.config.interfacePos, SFInterfaceNode.INSTANCE)) != null) return super.getEnergyHandler(level, port, graph);
 
         return null;

@@ -22,7 +22,7 @@ public class VerticalList<T extends Renderable> extends Renderable {
     }
 
     @Override
-    protected Layout extractInnerLayout(int dX, int dY) {
+    protected Layout extractInnerLayout(int dX, int dY, int dZ) {
 
         int maxWidth = this.width;
         int listY = 0;
@@ -30,7 +30,7 @@ public class VerticalList<T extends Renderable> extends Renderable {
         var c = new ArrayList<Layout>();
 
         for (var e : this.elements) {
-            var childLayout = e.extractLayout(0, listY);
+            var childLayout = e.extractLayout(0, listY, 0);
             listY += childLayout.height() + this.padding;
 
             maxWidth = Math.max(maxWidth, childLayout.width());
@@ -47,7 +47,7 @@ public class VerticalList<T extends Renderable> extends Renderable {
                 var layout = c.get(i);
                 var element = this.elements.get(i);
 
-                var childLayout = element.extractLayout((maxWidth - layout.width()), listY);
+                var childLayout = element.extractLayout((maxWidth - layout.width()), listY, 0);
                 listY += childLayout.height() + this.padding;
 
                 newLayouts.add(childLayout);
@@ -63,7 +63,7 @@ public class VerticalList<T extends Renderable> extends Renderable {
                 var layout = c.get(i);
                 var element = this.elements.get(i);
 
-                var childLayout = element.extractLayout((maxWidth - layout.width()) / 2, listY);
+                var childLayout = element.extractLayout((maxWidth - layout.width()) / 2, listY, 0);
                 listY += childLayout.height() + this.padding;
 
                 newLayouts.add(childLayout);
@@ -72,7 +72,7 @@ public class VerticalList<T extends Renderable> extends Renderable {
             c = newLayouts;
         }
 
-        return new Layout(dX, dY, Math.max(maxWidth, this.width), Math.max(listY - padding, this.height), this, c, false);
+        return new Layout(dX, dY, dZ, Math.max(maxWidth, this.width), Math.max(listY - padding, this.height), this, c, false);
     }
 
 }

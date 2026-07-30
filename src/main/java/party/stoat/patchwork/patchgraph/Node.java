@@ -1,17 +1,15 @@
 package party.stoat.patchwork.patchgraph;
 
 import com.kneelawk.graphlib.api.graph.BlockGraph;
-import mekanism.api.chemical.ChemicalResource;
-import net.minecraft.resources.Identifier;
+import mekanism.api.chemical.IChemicalHandler;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.neoforged.neoforge.transfer.ResourceHandler;
-import net.neoforged.neoforge.transfer.energy.EnergyHandler;
-import net.neoforged.neoforge.transfer.fluid.FluidResource;
-import net.neoforged.neoforge.transfer.item.ItemResource;
-import net.neoforged.neoforge.transfer.transaction.TransactionContext;
-import org.jspecify.annotations.Nullable;
+import net.neoforged.neoforge.energy.IEnergyStorage;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.items.IItemHandler;
 import party.stoat.patchwork.block.sf_controller.SFControllerBlockEntity;
 
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,23 +31,23 @@ public abstract class Node {
         return this.uuid;
     }
 
-    public @Nullable ResourceHandler<ChemicalResource> getChemicalHandler(ServerLevel level, NodeDescriptor.IO port, PatchInstance graph) {
+    public @Nullable IChemicalHandler getChemicalHandler(ServerLevel level, NodeDescriptor.IO port, PatchInstance graph) {
         return null;
     }
 
-    public @Nullable ResourceHandler<ItemResource> getItemHandler(ServerLevel level, NodeDescriptor.IO port, PatchInstance graph) {
+    public @Nullable IItemHandler getItemHandler(ServerLevel level, NodeDescriptor.IO port, PatchInstance graph) {
         return null;
     }
 
-    public @Nullable ResourceHandler<FluidResource> getFluidHandler(ServerLevel level, NodeDescriptor.IO port,PatchInstance graph) {
+    public @Nullable IFluidHandler getFluidHandler(ServerLevel level, NodeDescriptor.IO port, PatchInstance graph) {
         return null;
     }
 
-    public @Nullable EnergyHandler getEnergyHandler(ServerLevel level, NodeDescriptor.IO port, PatchInstance graph) {
+    public @Nullable IEnergyStorage getEnergyHandler(ServerLevel level, NodeDescriptor.IO port, PatchInstance graph) {
         return null;
     }
 
-    public void tick(StorageConfiguration config, PatchInstance patch, ServerLevel level, BlockGraph network, TransactionContext context, SFControllerBlockEntity controller) {
+    public void tick(StorageConfiguration config, PatchInstance patch, ServerLevel level, BlockGraph network, SFControllerBlockEntity controller) {
 
     }
 
@@ -57,7 +55,7 @@ public abstract class Node {
         return this.descriptor;
     }
 
-    public abstract Identifier getIdentifier();
+    public abstract ResourceLocation getIdentifier();
 
     public abstract void acceptConfiguration(String string);
 

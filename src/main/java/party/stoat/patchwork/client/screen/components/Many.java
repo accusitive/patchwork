@@ -14,14 +14,14 @@ public class Many extends Renderable {
     }
 
     @Override
-    protected Layout extractInnerLayout(int x, int y) {
+    protected Layout extractInnerLayout(int x, int y, int z) {
         int w = 0;
         int h = 0;
 
         List<Layout> c = new ArrayList<>();
 
         for (var e : this.elements) {
-            var l = e.extractLayout(0, 0);
+            var l = e.extractLayout(0, 0, 0);
 
             w = Math.max(w, l.x() + l.width());
             h = Math.max(h, l.y() + l.height());
@@ -29,6 +29,6 @@ public class Many extends Renderable {
             c.add(l);
         }
 
-        return new Layout(x, y, w, h, this, c, false, this.scissor);
+        return new Layout(x, y, z, w, h, this, c, false, this.scissor);
     }
 }

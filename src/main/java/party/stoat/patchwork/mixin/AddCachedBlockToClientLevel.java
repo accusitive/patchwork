@@ -5,6 +5,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -12,6 +13,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.EmptyLevelChunk;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
+import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.storage.WritableLevelData;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -25,6 +27,7 @@ import party.stoat.patchwork.virtual.VirtualSingleChunk;
 
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 @Mixin(Level.class)
 abstract class AddCachedBlockToClientLevel implements LevelVirtualBlockCache {
@@ -39,7 +42,7 @@ abstract class AddCachedBlockToClientLevel implements LevelVirtualBlockCache {
     private HashMap<BlockPos, VirtualSingleChunk> patchwork$cachedChunk;
 
     @Inject(method = "<init>*", at = @At("TAIL"))
-    private void populate(WritableLevelData levelData, ResourceKey dimension, RegistryAccess registryAccess, Holder dimensionTypeRegistration, boolean isClientSide, boolean isDebug, long biomeZoomSeed, int maxChainedNeighborUpdates, CallbackInfo ci) {
+    private void populate(WritableLevelData levelData, ResourceKey dimension, RegistryAccess registryAccess, Holder dimensionTypeRegistration, Supplier supplier, boolean isClientSide, boolean isDebug, long biomeZoomSeed, int maxChainedNeighborUpdates, CallbackInfo ci) {
         patchwork$cachedChunk = new HashMap<>();
     }
 

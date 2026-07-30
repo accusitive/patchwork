@@ -5,14 +5,14 @@ import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import party.stoat.patchwork.Patchwork;
 
 import java.util.UUID;
 
 public record OpenRemoteMachineServerboundPayload(UUID node, BlockPos pos) implements CustomPacketPayload {
 
-    public static final Identifier REMOTE_OPEN = Identifier.fromNamespaceAndPath(Patchwork.MOD_ID, "remote_open");
+    public static final ResourceLocation REMOTE_OPEN = ResourceLocation.fromNamespaceAndPath(Patchwork.MOD_ID, "remote_open");
     public static final CustomPacketPayload.Type<OpenRemoteMachineServerboundPayload> TYPE = new CustomPacketPayload.Type<>(REMOTE_OPEN);
     public static final StreamCodec<RegistryFriendlyByteBuf, OpenRemoteMachineServerboundPayload> CODEC = StreamCodec
             .composite(

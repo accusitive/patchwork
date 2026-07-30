@@ -9,7 +9,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.profiling.jfr.event.ChunkGenerationEvent;
@@ -22,6 +22,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
@@ -37,7 +38,6 @@ import net.neoforged.neoforge.event.level.ChunkEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.registries.DeferredItem;
-import net.neoforged.neoforge.transfer.energy.EnergyHandler;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
@@ -96,29 +96,29 @@ public class Patchwork {
             () -> new MenuType<>(SFControllerMenu::new, FeatureFlags.DEFAULT_FLAGS)
         );
 
-    public static final BlockCapability<EnergyHandler, Void> SF_CONTROLLER_ENERGY_CAPABILITY =
-            BlockCapability.createVoid(Identifier.fromNamespaceAndPath(MOD_ID, "energy_handler"), EnergyHandler.class);
+    public static final BlockCapability<Capabilities.EnergyStorage, Void> SF_CONTROLLER_ENERGY_CAPABILITY =
+            BlockCapability.createVoid(ResourceLocation.fromNamespaceAndPath(MOD_ID, "energy_handler"), Capabilities.EnergyStorage.class);
 
-    public static final GraphUniverse UNIVERSE = GraphUniverse.builder().build(Identifier.fromNamespaceAndPath(MOD_ID, "graph_universe"));
+    public static final GraphUniverse UNIVERSE = GraphUniverse.builder().build(ResourceLocation.fromNamespaceAndPath(MOD_ID, "graph_universe"));
 
     public static final VirtualManager VIRTUAL_MANAGER = new VirtualManager();
 
     // Creates a new food item with the id "patchwork:example_id", nutrition 1 and saturation 2
-    public static final DeferredItem<Item> SUPERCONDUCTING_INGOT = ITEMS.registerSimpleItem("superconducting_ingot", p -> p);
-    public static final DeferredItem<Item> SUPERCONDUCTING_DUST = ITEMS.registerSimpleItem("superconducting_dust", p -> p);
+    public static final DeferredItem<Item> SUPERCONDUCTING_INGOT = ITEMS.registerSimpleItem("superconducting_ingot");
+    public static final DeferredItem<Item> SUPERCONDUCTING_DUST = ITEMS.registerSimpleItem("superconducting_dust");
 
-    public static final DeferredItem<Item> MEDIATION_CORE = ITEMS.registerSimpleItem("mediation_core", p -> p);
-    public static final DeferredItem<Item> NEGOTIATION_CORE = ITEMS.registerSimpleItem("negotiation_core", p -> p);
+    public static final DeferredItem<Item> MEDIATION_CORE = ITEMS.registerSimpleItem("mediation_core");
+    public static final DeferredItem<Item> NEGOTIATION_CORE = ITEMS.registerSimpleItem("negotiation_core");
 
     public static final DeferredItem<Item> T1_VIRTUAL_STORAGE = ITEMS.registerItem("t1_virtual_storage", props -> new VirtualStorageItem(props, 1, 4));
     public static final DeferredItem<Item> T2_VIRTUAL_STORAGE = ITEMS.registerItem("t2_virtual_storage", props -> new VirtualStorageItem(props, 2, 16));
     public static final DeferredItem<Item> T3_VIRTUAL_STORAGE = ITEMS.registerItem("t3_virtual_storage", p -> new VirtualStorageItem(p.stacksTo(1).component(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true), 8, 64));
 
-    public static final DeferredItem<Item> T1_STORAGE_CELL = ITEMS.registerSimpleItem("t1_storage_cell", p -> p);
-    public static final DeferredItem<Item> T2_STORAGE_CELL = ITEMS.registerSimpleItem("t2_storage_cell", p -> p);
-    public static final DeferredItem<Item> T3_STORAGE_CELL = ITEMS.registerSimpleItem("t3_storage_cell", p -> p);
+    public static final DeferredItem<Item> T1_STORAGE_CELL = ITEMS.registerSimpleItem("t1_storage_cell");
+    public static final DeferredItem<Item> T2_STORAGE_CELL = ITEMS.registerSimpleItem("t2_storage_cell");
+    public static final DeferredItem<Item> T3_STORAGE_CELL = ITEMS.registerSimpleItem("t3_storage_cell");
 
-    public static final DeferredItem<Item> STORAGE_HOUSING = ITEMS.registerSimpleItem("storage_housing", p -> p);
+    public static final DeferredItem<Item> STORAGE_HOUSING = ITEMS.registerSimpleItem("storage_housing");
 
     // Creates a creative tab with the id "patchwork:example_tab" for the example item, that is placed after the combat tab
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> PATCHWORK_TAB = CREATIVE_MODE_TABS.register("patchwork", () -> CreativeModeTab.builder()
@@ -228,20 +228,19 @@ public class Patchwork {
                 EjectVirtualizedMachineServerboundPayload.CODEC,
                 (payload, context) -> {
                     if(context.player().level().getBlockEntity(payload.controllerPos()) instanceof SFControllerBlockEntity controller && context.player() instanceof ServerPlayer serverPlayer) {
-                        ServerLevel level = serverPlayer.level();
-                        var graph = Patchwork.UNIVERSE.getGraphWorld(serverPlayer.level()).getGraphForNode(new NodePos(payload.controllerPos(), SFControllerNode.INSTANCE));
+                        ServerLevel level = (ServerLevel) serverPlayer.level();
+                        var graph = Patchwork.UNIVERSE.getGraphWorld(level).getGraphForNode(new NodePos(payload.controllerPos(), SFControllerNode.INSTANCE));
                         var configs = StorageConfiguration.getConfigurationsFromNetwork(graph);
 
                         for(var config : configs) {
                             if(config.virtualized.contains(payload.virtualPos())) {
                                 config.virtualized.remove(payload.virtualPos());
 
-                                ((LevelVirtualDrops) serverPlayer.level()).patchwork$set(true);
+                                ((LevelVirtualDrops) level).patchwork$set(true);
 
                                 BlockState bs = level.getBlockState(payload.virtualPos());
                                 BlockEntity be = level.getBlockEntity(payload.virtualPos());
 
-                                if(be != null) be.preRemoveSideEffects(payload.virtualPos(), bs);
                                 Block.dropResources(bs, (ServerLevel) level, payload.virtualPos(), be);
 
                                 level.setBlockAndUpdate(payload.virtualPos(), Blocks.AIR.defaultBlockState());
@@ -256,7 +255,7 @@ public class Patchwork {
                                     level.addFreshEntity(new ItemEntity(level, context.player().getX(), context.player().getY(), context.player().getZ(), itemEntity.getItem()));
                                 }
 
-                                level.getServer().getDataStorage().computeIfAbsent(ServerSavedData.ID).setDirty();
+                                level.getDataStorage().computeIfAbsent(new SavedData.Factory<>(ServerSavedData::create, ServerSavedData::load), "configs").setDirty();
 
                                 break;
                             }
@@ -316,8 +315,8 @@ public class Patchwork {
         registrar.playToServer(
                 OpenRemoteMachineServerboundPayload.TYPE, OpenRemoteMachineServerboundPayload.CODEC, (payload, context) -> {
                     if(context.player().level().getBlockEntity(payload.pos()) instanceof SFControllerBlockEntity e && context.player() instanceof ServerPlayer serverPlayer) {
-                        ServerLevel level = serverPlayer.level();
-                        var graph = Patchwork.UNIVERSE.getGraphWorld(serverPlayer.level()).getGraphForNode(new NodePos(payload.pos(), SFControllerNode.INSTANCE));
+                        ServerLevel level = (ServerLevel) serverPlayer.level();
+                        var graph = Patchwork.UNIVERSE.getGraphWorld(level).getGraphForNode(new NodePos(payload.pos(), SFControllerNode.INSTANCE));
                         var configs = StorageConfiguration.getConfigurationsFromNetwork(graph);
 
                         outer: for(var config : configs) for(var patch : config.instances.values()) {
@@ -378,7 +377,7 @@ public class Patchwork {
                                 config.instances.put(newPatch.graphId, instance);
                                 instance.initialize(context.player().level().getServer());
 
-                                serverLevel.getServer().getDataStorage().computeIfAbsent(ServerSavedData.ID).setDirty();
+                                serverLevel.getDataStorage().computeIfAbsent(new SavedData.Factory<>(ServerSavedData::create, ServerSavedData::load), "configs").setDirty();
 
                                 StorageConfiguration.syncToPlayer(configs, graph, serverLevel, (ServerPlayer) context.player(), payload.pos());
                             }
@@ -404,7 +403,7 @@ public class Patchwork {
 
                             StorageConfiguration.syncToPlayer(configs, graph, (ServerLevel) context.player().level(), (ServerPlayer) context.player(), payload.pos());
 
-                            ((ServerLevel) context.player().level()).getServer().getDataStorage().computeIfAbsent(ServerSavedData.ID).setDirty();
+                            ((ServerLevel) context.player().level()).getDataStorage().computeIfAbsent(new SavedData.Factory<>(ServerSavedData::create, ServerSavedData::load), "configs").setDirty();
 
                             break;
                         }
@@ -415,7 +414,7 @@ public class Patchwork {
 
     private void registerCapabilities(RegisterCapabilitiesEvent event) {
         event.registerBlockEntity(
-                Capabilities.Energy.BLOCK,
+                Capabilities.EnergyStorage.BLOCK,
                 MyBlocks.SF_CONTROLLER_BLOCK_ENTITY.get(),
                 (entity, side) -> entity.handler
         );

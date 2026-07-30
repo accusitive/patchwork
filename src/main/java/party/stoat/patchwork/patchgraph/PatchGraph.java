@@ -1,6 +1,7 @@
 package party.stoat.patchwork.patchgraph;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.world.phys.Vec2;
@@ -12,6 +13,14 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class PatchGraph {
+    public static final Codec<Vec2> VEC2 = Codec.FLOAT.listOf().comapFlatMap(list -> {
+        if (list.size() != 2) {
+            return DataResult.error(() -> "Expected 2 floats for Vec2");
+        }
+
+        return DataResult.success(new Vec2(list.get(0), list.get(1)));
+    }, vec -> List.of(vec.x, vec.y));
+
 
     public static final Codec<PatchGraph> CODEC = RecordCodecBuilder.create(instance ->
             instance.group(
@@ -23,7 +32,7 @@ public class PatchGraph {
                     Codec.unboundedMap(UUIDUtil.STRING_CODEC, NodeDescriptor.CODEC)
                             .fieldOf("nodeDescriptors")
                             .forGetter(graph -> graph.nodeDescriptors),
-                    Codec.unboundedMap(UUIDUtil.STRING_CODEC, Vec2.CODEC)
+                    Codec.unboundedMap(UUIDUtil.STRING_CODEC, VEC2)
                             .fieldOf("nodePositions")
                             .forGetter(graph -> graph.nodePositions)
             ).apply(instance, (name, graphId, connections, nodeDescriptors, nodePositions) -> {

@@ -1,6 +1,6 @@
 package party.stoat.patchwork.client.screen.components;
 
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import org.joml.Matrix3x2f;
 import party.stoat.patchwork.client.screen.EditorScreen;
 import party.stoat.patchwork.patchgraph.PatchGraph;
@@ -23,13 +23,13 @@ public class NodeIOPort extends Renderable {
     }
 
     @Override
-    protected Layout extractInnerLayout(int x, int y) {
-        return new Layout(x - 2, y - 2, 8, 8, this, List.of(), false);
+    protected Layout extractInnerLayout(int x, int y, int z) {
+        return new Layout(x - 2, y - 2, 0, 8, 8, this, List.of(), false);
     }
 
     @Override
-    public void paint(GuiGraphicsExtractor g, Layout l, Matrix3x2f mat) {
-        super.paint(g, l, mat);
+    public void paint(GuiGraphics g, Layout l) {
+        super.paint(g, l);
 
         g.fill(2, 2, 6, 6, this.type.color);
     }

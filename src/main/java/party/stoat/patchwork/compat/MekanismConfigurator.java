@@ -19,14 +19,11 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.ARGB;
+import net.minecraft.util.FastColor;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.TagValueInput;
-import net.minecraft.world.level.storage.TagValueOutput;
-import net.minecraft.world.level.storage.ValueInput;
 import party.stoat.patchwork.patchgraph.NodeDescriptor;
 import party.stoat.patchwork.patchgraph.StorageConfiguration;
 
@@ -62,7 +59,7 @@ public class MekanismConfigurator implements StorageConfiguration.BlockConfigura
                         List.of(
                                 new NodeDescriptor.IO("Out", "out", new NodeDescriptor.Data(NodeDescriptor.DataType.Chemical, false), Direction.DOWN)
                         ),
-                        ARGB.color(255, 110, 100, 105),
+                        FastColor.ARGB32.color(255, 110, 100, 105),
                         i,
                         BuiltInRegistries.ITEM.getKey(BlockItem.BY_BLOCK.get(block)),
                         config
@@ -88,7 +85,7 @@ public class MekanismConfigurator implements StorageConfiguration.BlockConfigura
                         List.of(
                                 new NodeDescriptor.IO("Out", "out", new NodeDescriptor.Data(NodeDescriptor.DataType.Fluid, false), Direction.DOWN)
                         ),
-                        ARGB.color(255, 110, 100, 105),
+                        FastColor.ARGB32.color(255, 110, 100, 105),
                         i,
                         BuiltInRegistries.ITEM.getKey(BlockItem.BY_BLOCK.get(block)),
                         config
@@ -123,7 +120,7 @@ public class MekanismConfigurator implements StorageConfiguration.BlockConfigura
                                 new NodeDescriptor.IO("Left", "left", new NodeDescriptor.Data(NodeDescriptor.DataType.Chemical, false), Direction.WEST),
                                 new NodeDescriptor.IO("Right", "right", new NodeDescriptor.Data(NodeDescriptor.DataType.Chemical, false), Direction.EAST)
                         ),
-                        ARGB.color(255, 110, 100, 105),
+                        FastColor.ARGB32.color(255, 110, 100, 105),
                         i,
                         BuiltInRegistries.ITEM.getKey(BlockItem.BY_BLOCK.get(block)),
                         config
@@ -157,7 +154,7 @@ public class MekanismConfigurator implements StorageConfiguration.BlockConfigura
                         List.of(
                                 new NodeDescriptor.IO("Out", "out", new NodeDescriptor.Data(NodeDescriptor.DataType.Chemical, false), Direction.SOUTH)
                         ),
-                        ARGB.color(255, 110, 100, 105),
+                        FastColor.ARGB32.color(255, 110, 100, 105),
                         i,
                         BuiltInRegistries.ITEM.getKey(BlockItem.BY_BLOCK.get(block)),
                         config
@@ -182,7 +179,7 @@ public class MekanismConfigurator implements StorageConfiguration.BlockConfigura
                 List.of(
                         new NodeDescriptor.IO("Out", "out", new NodeDescriptor.Data(NodeDescriptor.DataType.Item, false), Direction.SOUTH)
                 ),
-                ARGB.color(255, 110, 100, 105),
+                FastColor.ARGB32.color(255, 110, 100, 105),
                 i,
                 BuiltInRegistries.ITEM.getKey(BlockItem.BY_BLOCK.get(block)),
                 config
@@ -231,7 +228,7 @@ public class MekanismConfigurator implements StorageConfiguration.BlockConfigura
                         List.of(
                                 new NodeDescriptor.IO("Result", "out", new NodeDescriptor.Data(NodeDescriptor.DataType.Chemical, false), Direction.SOUTH)
                         ),
-                        ARGB.color(255, 110, 100, 105),
+                        FastColor.ARGB32.color(255, 110, 100, 105),
                         i,
                         BuiltInRegistries.ITEM.getKey(BlockItem.BY_BLOCK.get(block)),
                         config
@@ -265,7 +262,7 @@ public class MekanismConfigurator implements StorageConfiguration.BlockConfigura
                         List.of(
                                 new NodeDescriptor.IO("Chemical Out", "out", new NodeDescriptor.Data(NodeDescriptor.DataType.Chemical, false), Direction.SOUTH)
                         ),
-                        ARGB.color(255, 110, 100, 105),
+                        FastColor.ARGB32.color(255, 110, 100, 105),
                         i,
                         BuiltInRegistries.ITEM.getKey(BlockItem.BY_BLOCK.get(block)),
                         config
@@ -297,7 +294,7 @@ public class MekanismConfigurator implements StorageConfiguration.BlockConfigura
                         List.of(
                                 new NodeDescriptor.IO("Out", "out", new NodeDescriptor.Data(NodeDescriptor.DataType.Item, false), Direction.EAST)
                         ),
-                        ARGB.color(255, 110, 100, 105),
+                        FastColor.ARGB32.color(255, 110, 100, 105),
                         i,
                         BuiltInRegistries.ITEM.getKey(BlockItem.BY_BLOCK.get(block)),
                         config
@@ -326,7 +323,7 @@ public class MekanismConfigurator implements StorageConfiguration.BlockConfigura
                 List.of(
                         new NodeDescriptor.IO("Out", "out", new NodeDescriptor.Data(NodeDescriptor.DataType.Item, false), Direction.SOUTH)
                 ),
-                ARGB.color(255, 110, 100, 105),
+                FastColor.ARGB32.color(255, 110, 100, 105),
                 i,
                 BuiltInRegistries.ITEM.getKey(BlockItem.BY_BLOCK.get(block)),
                 config
@@ -381,6 +378,7 @@ public class MekanismConfigurator implements StorageConfiguration.BlockConfigura
         return new TypeConfig(this, type.ordinal());
     }
 
+    // TODO: check 1.21.1 implementation
     @Override
     public void apply(BlockPos pos, BlockState state, BlockEntity entity, ServerLevel level, ServerPlayer player) {
         IConfigCardAccess access = level.getCapability(Capabilities.CONFIG_CARD, pos, null);

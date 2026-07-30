@@ -14,7 +14,7 @@ public class ChunkMapTrackPlayerWatchingRemoteMachine {
     @Inject(method = "isChunkTracked", at = @At("RETURN"), cancellable = true)
     public void remotePlayersTrackVirtualBlocks(ServerPlayer player, int chunkX, int chunkZ, CallbackInfoReturnable<Boolean> cir) {
         if(player instanceof PlayerVirtualTrackedChunk tracker && tracker.patchwork$getChunk() != null) {
-            boolean virtualIsTracked = tracker.patchwork$getChunk().x() == chunkX && tracker.patchwork$getChunk().z() == chunkZ;
+            boolean virtualIsTracked = tracker.patchwork$getChunk().x == chunkX && tracker.patchwork$getChunk().z == chunkZ;
             cir.setReturnValue(cir.getReturnValue() | virtualIsTracked);
         }
     }

@@ -3,23 +3,22 @@ package party.stoat.patchwork.client.screen;
 import com.google.gson.Gson;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.input.CharacterEvent;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
-import net.minecraft.util.ARGB;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.repository.Pack;
+import net.minecraft.util.FastColor;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.client.network.ClientPacketDistributor;
+import net.neoforged.neoforge.network.PacketDistributor;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.joml.Matrix3x2f;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 import party.stoat.patchwork.Patchwork;
 import party.stoat.patchwork.patchgraph.StorageConfiguration;
@@ -33,16 +32,17 @@ import party.stoat.patchwork.network.CreatePatchServerboundPayload;
 import party.stoat.patchwork.network.UpdatePatchServerboundPayload;
 import party.stoat.patchwork.patchgraph.nodes.SplitterNode;
 
+import javax.annotation.Nullable;
 import java.util.*;
 
-public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
+public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> implements GuiEventListener {
 
     public static Font FONT = Minecraft.getInstance().font;
 
-    private static final Identifier CONTAINER_TEXTURE = Identifier.fromNamespaceAndPath(Patchwork.MOD_ID, "textures/gui/container/inventory.png");
-    public static final Identifier MAGNIFYING_GLASS_TEXTURE = Identifier.fromNamespaceAndPath(Patchwork.MOD_ID, "textures/gui/magnifying_glass.png");
-    public static final Identifier EJECT_TEXTURE = Identifier.fromNamespaceAndPath(Patchwork.MOD_ID, "textures/gui/eject.png");
-    public static final Identifier WRENCH_TEXTURE = Identifier.fromNamespaceAndPath(Patchwork.MOD_ID, "textures/gui/eject.png");
+    private static final ResourceLocation CONTAINER_TEXTURE = ResourceLocation.fromNamespaceAndPath(Patchwork.MOD_ID, "textures/gui/container/inventory.png");
+    public static final ResourceLocation MAGNIFYING_GLASS_TEXTURE = ResourceLocation.fromNamespaceAndPath(Patchwork.MOD_ID, "textures/gui/magnifying_glass.png");
+    public static final ResourceLocation EJECT_TEXTURE = ResourceLocation.fromNamespaceAndPath(Patchwork.MOD_ID, "textures/gui/eject.png");
+    public static final ResourceLocation WRENCH_TEXTURE = ResourceLocation.fromNamespaceAndPath(Patchwork.MOD_ID, "textures/gui/eject.png");
 
     private static final int CONTAINER_WIDTH = 175;
     private static final int CONTAINER_HEIGHT = 90;
@@ -57,7 +57,9 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
     private Renderable saveButton = new ImageButton(ImageButton.SAVE, 28, 28, (_, _) -> this.save());
 
     public EditorScreen(SFControllerMenu menu, Inventory inventory, Component component) {
-        super(menu, inventory, component, CONTAINER_WIDTH, CONTAINER_HEIGHT);
+        super(menu, inventory, component);
+        this.width = CONTAINER_WIDTH;
+        this.height = CONTAINER_HEIGHT;
         this.state = new EditorState();
         this.state.menu = menu;
 
@@ -69,6 +71,11 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
         super.init();
 
         this.topPos = this.height - this.imageHeight;
+    }
+
+    @Override
+    protected void renderBg(GuiGraphics guiGraphics, float v, int i, int i1) {
+        // TODO: implement
     }
 
     public static class EditorState {
@@ -109,19 +116,19 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
     }
 
     @Override
-    public boolean charTyped(CharacterEvent event) {
+    public boolean charTyped(char c, int state) {
         if(this.lastLayout != null) {
-            this.lastLayout.charTyped(event, this.state);
+            this.lastLayout.charTyped(c, this.state);
         }
 
         return true;
     }
 
     @Override
-    public boolean mouseClicked(@NonNull MouseButtonEvent event, boolean doubleClick) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (this.lastLayout != null) {
-            var result = this.lastLayout.onMouseDown((int) event.x(), (int) event.y(), this.state);
-            this.lastLayout.onMouseDownGlobal((int) event.x(), (int) event.y(), this.state);
+            var result = this.lastLayout.onMouseDown((int) mouseX, (int) mouseY, this.state);
+            this.lastLayout.onMouseDownGlobal((int) mouseX, (int) mouseY, this.state);
 
             if(!result) {
                 state.selectedNodes.forEach(node -> node.highlighted = false);
@@ -129,18 +136,18 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
             }
         }
 
-        super.mouseClicked(event, doubleClick);
+        super.mouseClicked(mouseX, mouseY, button);
 
         return true;
     }
 
     @Override
-    public boolean mouseReleased(MouseButtonEvent event) {
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
         if (this.lastLayout != null) {
-            this.lastLayout.onMouseUp((int) event.x(), (int) event.y(), this.state);
+            this.lastLayout.onMouseUp((int) mouseX, (int) mouseY, this.state);
         }
 
-        super.mouseReleased(event);
+        super.mouseReleased(mouseX, mouseY, button);
 
         state.draggingFrom = null;
 
@@ -172,7 +179,7 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
         }
 
         this.state.editorDirty = false;
-        ClientPacketDistributor.sendToServer(new UpdatePatchServerboundPayload(
+        PacketDistributor.sendToServer(new UpdatePatchServerboundPayload(
                 state.getCurrentGraph().graphId,
                 state.getCurrentGraph(),
                 this.state.controllerPos
@@ -180,24 +187,24 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
     }
 
     @Override
-    public boolean keyReleased(KeyEvent event) {
-        if(event.key() == GLFW.GLFW_KEY_LEFT_SHIFT) state.shiftPressed = false;
+    public boolean keyReleased(int key, int scancode, int mods) {
+        if(key == GLFW.GLFW_KEY_LEFT_SHIFT) state.shiftPressed = false;
 
-        if(this.lastLayout != null) this.lastLayout.onKeyUp(event);
+        if(this.lastLayout != null) this.lastLayout.onKeyUp(key, scancode, mods);
 
-        return super.keyReleased(event);
+        return super.keyReleased(key, scancode, mods);
     }
 
     @Override
-    public boolean keyPressed(KeyEvent event) {
-        if(event.hasControlDown() && event.key() == GLFW.GLFW_KEY_S) {
+    public boolean keyPressed(int key, int scancode, int mods) {
+        if(Screen.hasControlDown() && key == GLFW.GLFW_KEY_S) {
             this.save();
             return true;
         }
 
-        if(event.key() == GLFW.GLFW_KEY_LEFT_SHIFT) state.shiftPressed = true;
+        if(key == GLFW.GLFW_KEY_LEFT_SHIFT) state.shiftPressed = true;
         
-        if(event.key() == GLFW.GLFW_KEY_DELETE) {
+        if(key == GLFW.GLFW_KEY_DELETE) {
             for(var node : state.selectedNodes) {
                 if(state.getCurrentGraph() == null) break;
                 state.getCurrentGraph().connections.removeIf(
@@ -209,9 +216,11 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
             state.selectedNodes.clear();
         }
 
-        if(this.lastLayout != null) this.lastLayout.onKeyDown(event);
+        if(this.lastLayout != null) this.lastLayout.onKeyDown(key, scancode, mods);
 
-        if(event.isEscape()) super.keyPressed(event);
+        if(key == GLFW.GLFW_KEY_ESCAPE) {
+            super.keyPressed(key, scancode, mods);
+        }
 
         return true;
     }
@@ -225,16 +234,15 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
         }
 
         @Override
-        public void paint(GuiGraphicsExtractor g, Layout l, Matrix3x2f mat) {
-            super.paint(g, l, mat);
-            g.item(stack, 0, 0);
+        public void paint(GuiGraphics g, Layout l) {
+            super.paint(g, l);
+            g.renderItem(stack, 0, 0);
         }
 
         @Override
-        protected Layout extractInnerLayout(int x, int y) {
-            return new Layout(x, y, 16, 16, this, List.of(), false);
+        protected Layout extractInnerLayout(int x, int y, int z) {
+            return new Layout(x, y, z, 16, 16, this, List.of(), false);
         }
-
     }
 
     @Override
@@ -248,7 +256,7 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
 
         this.rightSidebar.offsetX = minecraft.getWindow().getGuiScaledWidth() - 200;
 
-        if(this.canvas == null || this.rightSidebar == null) this.resize(width, height);
+        if(this.canvas == null || this.rightSidebar == null) this.resize(minecraft, width, height);
 
         this.root = new Many(List.of(
             this.canvas,
@@ -315,12 +323,12 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
         scrollable.offsetX = minecraft.getWindow().getGuiScaledWidth() - list.width;
         scrollable.offsetY = 5;
 
-        return new BackgroundColorNode<>(ARGB.color(200, 25, 25, 35), scrollable);
+        return new BackgroundColorNode<>(FastColor.ARGB32.color(200, 25, 25, 35), scrollable);
     }
 
     @Override
-    public void resize(int width, int height) {
-        super.resize(width, height);
+    public void resize(Minecraft client, int width, int height) {
+        super.resize(client, width, height);
 
         state.graphNodes.scissor = false;
 
@@ -335,7 +343,7 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
 
         this.refresh(width, height);
 
-        this.lastLayout = root.extractLayout(0, 0);
+        this.lastLayout = root.extractLayout(0, 0, 0);
     }
 
     private Renderable buildLeftSidebar() {
@@ -359,7 +367,7 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
         }
 
         otherButtons.add(new ImageButton(ImageButton.PLUS, 24, 24, (_, _) -> {
-            ClientPacketDistributor.sendToServer(new CreatePatchServerboundPayload(
+            PacketDistributor.sendToServer(new CreatePatchServerboundPayload(
                     this.state.controllerPos
             ));
         }));
@@ -372,7 +380,7 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
         list.elements.add(otherButtonsList);
 
         var scrollable = new Scrollable<>(list, 200, Minecraft.getInstance().getWindow().getGuiScaledHeight());
-        return new BackgroundColorNode<>(ARGB.color(200, 25, 25, 35), scrollable);
+        return new BackgroundColorNode<>(FastColor.ARGB32.color(200, 25, 25, 35), scrollable);
     }
 
     public void setGraph(PatchGraph graph) {
@@ -468,7 +476,7 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
         return out;
     }
 
-    private void drawEffects(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
+    private void drawEffects(GuiGraphics graphics, int mouseX, int mouseY) {
         var lines = this.getLines(mouseX, mouseY);
 
         if(this.canvas == null) return;
@@ -480,7 +488,7 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
     }
 
     @Override
-    public void extractRenderState(@NonNull GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
+    public void extractRenderState(@NonNull GuiGraphics graphics, int mouseX, int mouseY, float a) {
         this.drawEffects(graphics, mouseX, mouseY);
 
         if(this.lastLayout != null) this.lastLayout.paint(graphics);
@@ -495,10 +503,5 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
         int tp = this.topPos - 9;
         graphics.blit(CONTAINER_TEXTURE, tl, tp, tl + 256, tp + 256, 0.0F, 1.0F, 0.0F, 1.0F);
         super.extractRenderState(graphics, mouseX, mouseY, a);
-    }
-
-    @Override
-    protected void extractLabels(GuiGraphicsExtractor graphics, int xm, int ym) {
-        //dont do that
     }
 }
