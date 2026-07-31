@@ -20,14 +20,12 @@ public class CanvasNode extends ScissorNode {
 
             for(int x=0;x<(cache.width() / gridSize) + 1;x++) {
                 int renderX = (int) ((x * gridSize / this.scale) + (this.innerOffsetX / this.scale % gridSize));
-                // todo: look for alternative
-                g.verticalLine(renderX, 0, cache.height(), 0x11555555);
+                g.fill(renderX, 0, renderX + 1, cache.height(), 0x11555555);
             }
 
             for(int y=0;y<(cache.height() / gridSize) + 1;y++) {
                 int renderY = (int) ((y * gridSize / this.scale) + (this.innerOffsetY / this.scale % gridSize));
-                // todo: look for alternative
-                g.horizontalLine(cache.x(), cache.x() + cache.width(), renderY, 0x11555555);
+                g.fill(cache.x(), renderY, cache.x() + cache.width(), renderY + 1, 0x11555555);
             }
         }
     }

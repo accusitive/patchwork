@@ -38,7 +38,7 @@ public class TextInput extends Renderable {
 
         g.fill(0, 0, l.width(), l.height(), this.highlight ? this.highlightedColor : this.backgroundColor);
 //        this.editBox.setValue("yuuup");
-        this.editBox.extractWidgetRenderState(g, 0, 0, 1.0f);
+        this.editBox.render(g, 0, 0, 1.0f);
     }
 
     @Override
@@ -56,9 +56,8 @@ public class TextInput extends Renderable {
     }
 
     @Override
-    public boolean charTyped(char c, EditorScreen.EditorState state) {
-        // charTyped(char c, int keyCode)
-        return this.editBox.charTyped(c, state);
+    public boolean charTyped(char c, int keyCode, EditorScreen.EditorState state) {
+        return this.editBox.charTyped(c, keyCode);
     }
 
     @Override

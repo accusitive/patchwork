@@ -11,7 +11,6 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.material.Fluid;
@@ -22,7 +21,6 @@ import net.minecraft.world.ticks.TickContainerAccess;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import javax.annotation.Nullable;
-import java.util.List;
 import java.util.Optional;
 
 public class VirtualSingleChunk extends LevelChunk {
@@ -120,6 +118,7 @@ public class VirtualSingleChunk extends LevelChunk {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <T extends BlockEntity> @NonNull Optional<T> getBlockEntity(@NonNull BlockPos pos, @NonNull BlockEntityType<T> type) {
         var be = this.getBlockEntity(pos);
 

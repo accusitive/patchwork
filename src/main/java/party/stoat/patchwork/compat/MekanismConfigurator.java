@@ -17,6 +17,7 @@ import mekanism.common.tile.prefab.TileEntityElectricMachine;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.FastColor;
@@ -51,7 +52,7 @@ public class MekanismConfigurator implements StorageConfiguration.BlockConfigura
 
         descriptorProvider.put(
                 TileEntityChemicalTank.class,
-                (config, block, formatter, _, i) -> new NodeDescriptor(
+                (config, block, formatter, be, i) -> new NodeDescriptor(
                         formatter.apply(block.getName().getString()),
                         List.of(
                                 new NodeDescriptor.IO("In", "in", new NodeDescriptor.Data(NodeDescriptor.DataType.Chemical, false), Direction.UP)
@@ -77,7 +78,7 @@ public class MekanismConfigurator implements StorageConfiguration.BlockConfigura
 
         descriptorProvider.put(
                 TileEntityFluidTank.class,
-                (config, block, formatter, _, i) -> new NodeDescriptor(
+                (config, block, formatter, be, i) -> new NodeDescriptor(
                         formatter.apply(block.getName().getString()),
                         List.of(
                                 new NodeDescriptor.IO("In", "in", new NodeDescriptor.Data(NodeDescriptor.DataType.Fluid, false), Direction.UP)
@@ -110,7 +111,7 @@ public class MekanismConfigurator implements StorageConfiguration.BlockConfigura
 
         descriptorProvider.put(
                 TileEntityElectrolyticSeparator.class,
-                (config, block, formatter, _, i) -> new NodeDescriptor(
+                (config, block, formatter, be, i) -> new NodeDescriptor(
                         formatter.apply(block.getName().getString()),
                         List.of(
                                 new NodeDescriptor.IO("In", "in", new NodeDescriptor.Data(NodeDescriptor.DataType.Fluid, false), Direction.NORTH),
@@ -144,7 +145,7 @@ public class MekanismConfigurator implements StorageConfiguration.BlockConfigura
 
         descriptorProvider.put(
                 TileEntityChemicalDissolutionChamber.class,
-                (config, block, formatter, _, i) -> new NodeDescriptor(
+                (config, block, formatter, be, i) -> new NodeDescriptor(
                         formatter.apply(block.getName().getString()),
                         List.of(
                                 new NodeDescriptor.IO("Item In", "itemin", new NodeDescriptor.Data(NodeDescriptor.DataType.Item, false), Direction.NORTH),
@@ -170,7 +171,7 @@ public class MekanismConfigurator implements StorageConfiguration.BlockConfigura
                 .set(DataType.INPUT, Direction.UP)
                 .finish();
 
-        StorageConfiguration.NodeDescriptorProvider electricMachineDescriptor = (config, block, formatter, _, i) -> new NodeDescriptor(
+        StorageConfiguration.NodeDescriptorProvider electricMachineDescriptor = (config, block, formatter, be, i) -> new NodeDescriptor(
                 formatter.apply(block.getName().getString()),
                 List.of(
                         new NodeDescriptor.IO("In", "in", new NodeDescriptor.Data(NodeDescriptor.DataType.Item, false), Direction.NORTH),
@@ -219,7 +220,7 @@ public class MekanismConfigurator implements StorageConfiguration.BlockConfigura
 
         descriptorProvider.put(
                 TileEntityFormulaicAssemblicator.class,
-                (config, block, formatter, _, i) -> new NodeDescriptor(
+                (config, block, formatter, be, i) -> new NodeDescriptor(
                         formatter.apply(block.getName().getString()),
                         List.of(
                                 new NodeDescriptor.IO("Ingredients", "ingredients", new NodeDescriptor.Data(NodeDescriptor.DataType.Item, false), Direction.NORTH),
@@ -252,7 +253,7 @@ public class MekanismConfigurator implements StorageConfiguration.BlockConfigura
 
         descriptorProvider.put(
                 TileEntityChemicalWasher.class,
-                (config, block, formatter, _, i) -> new NodeDescriptor(
+                (config, block, formatter, be, i) -> new NodeDescriptor(
                         formatter.apply(block.getName().getString()),
                         List.of(
                                 new NodeDescriptor.IO("Fluid In", "fluidin", new NodeDescriptor.Data(NodeDescriptor.DataType.Fluid, false), Direction.WEST),
@@ -285,7 +286,7 @@ public class MekanismConfigurator implements StorageConfiguration.BlockConfigura
 
         descriptorProvider.put(
                 TileEntityChemicalCrystallizer.class,
-                (config, block, formatter, _, i) -> new NodeDescriptor(
+                (config, block, formatter, be, i) -> new NodeDescriptor(
                         formatter.apply(block.getName().getString()),
                         List.of(
                                 new NodeDescriptor.IO("In", "in", new NodeDescriptor.Data(NodeDescriptor.DataType.Chemical, false), Direction.WEST),
@@ -313,7 +314,7 @@ public class MekanismConfigurator implements StorageConfiguration.BlockConfigura
                 .set(DataType.INPUT, Direction.UP)
                 .finish();
 
-        StorageConfiguration.NodeDescriptorProvider advancedElectricMachineDescriptor = (config, block, formatter, _, i) -> new NodeDescriptor(
+        StorageConfiguration.NodeDescriptorProvider advancedElectricMachineDescriptor = (config, block, formatter, be, i) -> new NodeDescriptor(
                 formatter.apply(block.getName().getString()),
                 List.of(
                         new NodeDescriptor.IO("Item In", "in", new NodeDescriptor.Data(NodeDescriptor.DataType.Item, false), Direction.WEST),
@@ -382,34 +383,33 @@ public class MekanismConfigurator implements StorageConfiguration.BlockConfigura
     @Override
     public void apply(BlockPos pos, BlockState state, BlockEntity entity, ServerLevel level, ServerPlayer player) {
         IConfigCardAccess access = level.getCapability(Capabilities.CONFIG_CARD, pos, null);
-
         if (access != null && entity instanceof ITileDirectional directional) {
-            // Get current configuration data
-            TagValueOutput valueOutput = TagValueOutput.createWithoutContext(ProblemReporter.DISCARDING);
-
             Direction machineFacing = directional.getDirection();
-
-            access.writeConfigurationData(valueOutput, player);
-
-            var currentConfig = valueOutput.buildResult();
-            var component_config = currentConfig.getCompoundOrEmpty("component_config");
-
-            for(var configOrdinal : this.configs.keySet()) {
+            CompoundTag currentConfig = access.getConfigurationData(level.registryAccess(), player);
+            CompoundTag componentConfig = currentConfig.getCompound("component_config");
+            for (var configOrdinal : this.configs.keySet()) {
                 var sfConfig = this.configs.get(configOrdinal);
-                var mekConfig = component_config.getIntArray(SerializationConstants.CONFIG + configOrdinal).orElse(new int[6]);
+                int[] mekConfig = componentConfig.getIntArray(SerializationConstants.CONFIG + configOrdinal);
+                if (mekConfig.length != 6) mekConfig = new int[6];
 
-                for(var transmissionTypeOrdinal : sfConfig.sets.keySet()) {
+                for (var transmissionTypeOrdinal : sfConfig.sets.keySet()) {
                     var sides = sfConfig.sets.get(transmissionTypeOrdinal);
-
-                    for(Direction d : sides) {
+                    for (Direction d : sides) {
                         RelativeSide side = RelativeSide.fromDirections(machineFacing, d);
                         mekConfig[side.ordinal()] = transmissionTypeOrdinal;
                     }
                 }
+
+                componentConfig.putIntArray(SerializationConstants.CONFIG + configOrdinal, mekConfig);
             }
 
-            ValueInput input = TagValueInput.create(ProblemReporter.DISCARDING, level.registryAccess(), currentConfig);
-            access.setConfigurationData(input, player);
+            currentConfig.put("component_config", componentConfig);
+            access.setConfigurationData(
+                    level.registryAccess(),
+                    player,
+                    currentConfig
+            );
+            access.configurationDataSet();
         }
     }
 }

@@ -31,6 +31,8 @@ import party.stoat.patchwork.graphlib.SFCableNode;
 import javax.annotation.Nullable;
 import java.util.List;
 
+import static net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING;
+
 public class SFTerminal extends DirectionalBlock implements SFNetworkConnectable {
 
     public static final BooleanProperty POWERED = BooleanProperty.create("powered");
@@ -50,12 +52,12 @@ public class SFTerminal extends DirectionalBlock implements SFNetworkConnectable
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, POWERED);
+        builder.add(HORIZONTAL_FACING, POWERED);
     }
 
     @Override
     public @Nullable BlockState getStateForPlacement(BlockPlaceContext context) {
-        return defaultBlockState().setValue(POWERED, false).setValue(FACING, context.getHorizontalDirection().getOpposite());
+        return defaultBlockState().setValue(POWERED, false).setValue(HORIZONTAL_FACING, context.getHorizontalDirection().getOpposite());
     }
 
     @Override
