@@ -1,10 +1,12 @@
 package party.stoat.patchwork.block.sf_controller;
 
+import com.google.gson.Gson;
 import com.kneelawk.graphlib.api.graph.BlockGraph;
 import com.kneelawk.graphlib.api.util.NodePos;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
@@ -22,6 +24,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.ticks.ContainerSingleItem;
 import net.neoforged.neoforge.energy.EnergyStorage;
 import net.neoforged.neoforge.energy.IEnergyStorage;
@@ -47,6 +50,7 @@ public class SFControllerBlockEntity extends BlockEntity implements MenuProvider
 
     public EnergyStorage selfStorage = new EnergyStorage(10000, 1000, 10);
     public MultiEnergyHandler handler = new MultiEnergyHandler(List.of());
+    public UUID lastViewedPatch;
 
     public HashSet<BlockPos> loaded = new HashSet<>();
 
@@ -95,10 +99,8 @@ public class SFControllerBlockEntity extends BlockEntity implements MenuProvider
             for(var instance : config.instances.values()) {
                 for(var node : instance.nodes.values()) {
                     if(node instanceof VirtualizedBlockNode virtual) {
-//                        if(!entity.loaded.contains(virtual.proxyPos)) {
-                            serverLevel.setChunkForced(virtual.proxyPos.getX() / 16, virtual.proxyPos.getZ() / 16, true);
-                            entity.loaded.add(virtual.proxyPos);
-//                        }
+                        serverLevel.setChunkForced(virtual.proxyPos.getX() / 16, virtual.proxyPos.getZ() / 16, true);
+                        entity.loaded.add(virtual.proxyPos);
                     }
                 }
             }
@@ -124,16 +126,16 @@ public class SFControllerBlockEntity extends BlockEntity implements MenuProvider
 
         entity.handler.handlers = energyHandlers;
 
-            for(var sfNode : sfNetworkGraph.getNodes().toList()) {
-                if(sfNode.getBlockState().getBlock() instanceof SFEnergyHandler energyHandler) {
-                    var desired = energyHandler.desiredAmount();
-                    var extractedAmount = entity.selfStorage.extractEnergy(desired, false);
+        for(var sfNode : sfNetworkGraph.getNodes().toList()) {
+            if(sfNode.getBlockState().getBlock() instanceof SFEnergyHandler energyHandler) {
+                var desired = energyHandler.desiredAmount();
+                var extractedAmount = entity.selfStorage.extractEnergy(desired, false);
 
-                    if(extractedAmount < desired) break;
+                if(extractedAmount < desired) break;
 
-                    energyHandler.receiveEnergy(extractedAmount, false);
-                }
+                energyHandler.receiveEnergy(extractedAmount, false);
             }
+        }
 
         for(var sfNode : sfNetworkGraph.getNodes().toList()) {
             if(sfNode.getBlockState().getBlock() instanceof SFEnergyHandler energyHandler) {
@@ -151,6 +153,17 @@ public class SFControllerBlockEntity extends BlockEntity implements MenuProvider
                     for(var config : configs) {
                         if(config.virtualized.size() < config.maxVirtualized) {
                             config.virtualized.add(pos);
+
+                            if(entity.lastViewedPatch != null ) {
+                                var patch = configs.stream().flatMap(c -> c.graphs.stream()).filter(graph -> graph.graphId.equals(entity.lastViewedPatch)).findFirst();
+                                if (patch.isPresent()) {
+                                    var d = StorageConfiguration.getDescriptorForBlock(serverLevel, pos, x -> x, null, VirtualizedBlockNode.IDENTIFIER, new Gson().toJson(pos));
+                                    var newId = UUID.randomUUID();
+                                    patch.get().nodeDescriptors.put(newId, d);
+                                    patch.get().nodePositions.put(newId, new Vec2(100, 100));
+                                }
+                            }
+
                             break;
                         }
                     }
@@ -161,18 +174,18 @@ public class SFControllerBlockEntity extends BlockEntity implements MenuProvider
         for(var config : configs) {
             var nodeGraph = Patchwork.UNIVERSE.getGraphWorld(serverLevel).getGraphForNode(new NodePos(blockPos, SFControllerNode.INSTANCE));
 
-                for(var patchInstance : config.instances.values()) {
-                    for(var node : patchInstance.nodes.values()) {
-                            node.tick(config, patchInstance, serverLevel, nodeGraph, entity);
-                            var amount = entity.selfStorage.getEnergyStored() - 10;
-                            // TODO: set -> receiveEnergy?
-                            entity.selfStorage.receiveEnergy(Math.max(amount, 0), false);
-                        }
-                    }
+            for(var patchInstance : config.instances.values()) {
+                for(var node : patchInstance.nodes.values()) {
+                    node.tick(config, patchInstance, serverLevel, nodeGraph, entity);
+                    var amount = entity.selfStorage.getEnergyStored() - 10;
+                    // TODO: set -> receiveEnergy?
+                    entity.selfStorage.receiveEnergy(Math.max(amount, 0), false);
                 }
+            }
+        }
 
         if(!entity.spawnIn.isEmpty() && entity.watcher != null) {
-            StorageConfiguration.syncToPlayer(configs, sfNetworkGraph, serverLevel, entity.watcher, blockPos);
+            StorageConfiguration.syncToPlayer(configs, sfNetworkGraph, serverLevel, entity.watcher, entity);
         }
 
         entity.spawnIn.clear();
@@ -203,6 +216,7 @@ public class SFControllerBlockEntity extends BlockEntity implements MenuProvider
     protected void saveAdditional(@NonNull CompoundTag tag, HolderLookup.Provider provider) {
         ContainerHelper.saveAllItems(tag, NonNullList.of(theItem), provider);
         tag.put("energy", selfStorage.serializeNBT(provider));
+        if(this.lastViewedPatch != null) tag.putString("lastViewed", this.lastViewedPatch.toString());
 
         super.saveAdditional(tag, provider);
     }
@@ -213,6 +227,10 @@ public class SFControllerBlockEntity extends BlockEntity implements MenuProvider
 
         if (tag.contains("energy")) {
             selfStorage.deserializeNBT(provider, tag.get("energy"));
+        }
+
+        if(tag.contains("lastViewed")) {
+            this.lastViewedPatch = UUID.fromString(tag.getString("lastViewed"));
         }
 
         super.loadAdditional(tag, provider);

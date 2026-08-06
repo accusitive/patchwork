@@ -1,6 +1,7 @@
 package party.stoat.patchwork.network;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -12,8 +13,10 @@ import party.stoat.patchwork.patchgraph.PatchGraph;
 import party.stoat.patchwork.patchgraph.StorageConfiguration;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
-public record SFControllerSyncClientboundPayload(List<PatchGraph> patches, List<StorageConfiguration.NodeCategory> nodeDescriptors, BlockPos controllerPos) implements CustomPacketPayload {
+public record SFControllerSyncClientboundPayload(List<PatchGraph> patches, List<StorageConfiguration.NodeCategory> nodeDescriptors, BlockPos controllerPos, Optional<UUID> view) implements CustomPacketPayload {
 
     public static final ResourceLocation PATCH_CONTROLLER_SYNC = ResourceLocation.fromNamespaceAndPath(Patchwork.MOD_ID, "patch_sync");
     public static final CustomPacketPayload.Type<SFControllerSyncClientboundPayload> TYPE = new CustomPacketPayload.Type<>(PATCH_CONTROLLER_SYNC);
@@ -22,6 +25,7 @@ public record SFControllerSyncClientboundPayload(List<PatchGraph> patches, List<
                     ByteBufCodecs.fromCodec(PatchGraph.CODEC).apply(ByteBufCodecs.list()), SFControllerSyncClientboundPayload::patches,
                     ByteBufCodecs.fromCodec(StorageConfiguration.NodeCategory.CODEC).apply(ByteBufCodecs.list()), SFControllerSyncClientboundPayload::nodeDescriptors,
                     BlockPos.STREAM_CODEC, SFControllerSyncClientboundPayload::controllerPos,
+                    ByteBufCodecs.optional(UUIDUtil.STREAM_CODEC), SFControllerSyncClientboundPayload::view,
                     SFControllerSyncClientboundPayload::new
             );
 

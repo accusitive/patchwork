@@ -35,10 +35,10 @@ public abstract class Renderable {
             g.pose().pushPose();
             g.pose().scale(scale, scale, scale);
             g.pose().translate(this.x, this.y, this.z);
-            if(this.scissor) g.enableScissor(0, 0, this.width, this.height);
+//            if(this.scissor) g.enableScissor(this.x, this.y, this.x + this.width, this.y + this.height);
             this.r.paint(g, this);
             this.children.forEach(c -> c.paint(g));
-            if(this.scissor) g.disableScissor();
+//            if(this.scissor) g.disableScissor();
             g.pose().popPose();
 //            g.pose().popMatrix();
         }

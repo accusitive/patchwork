@@ -35,6 +35,7 @@ import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.network.PacketDistributor;
 import party.stoat.patchwork.Patchwork;
+import party.stoat.patchwork.block.sf_controller.SFControllerBlockEntity;
 import party.stoat.patchwork.compat.MekanismConfigurator;
 import party.stoat.patchwork.block.SFStorageDriveData;
 import party.stoat.patchwork.block.sf_drive.SFDriveBlockEntity;
@@ -234,10 +235,10 @@ public class StorageConfiguration {
         return configs;
     }
 
-    public static void syncToPlayer(List<StorageConfiguration> configs, BlockGraph graph, ServerLevel level, ServerPlayer player, BlockPos controllerPos) {
+    public static void syncToPlayer(List<StorageConfiguration> configs, BlockGraph graph, ServerLevel level, ServerPlayer player, SFControllerBlockEntity entity) {
         var descriptors = StorageConfiguration.getNodesFromNetworkResources(configs, graph, level, player);
 
-        PacketDistributor.sendToPlayer(player, new SFControllerSyncClientboundPayload(configs.stream().filter(c -> c.graphs != null).flatMap(c -> c.graphs.stream()).toList(), descriptors, controllerPos));
+        PacketDistributor.sendToPlayer(player, new SFControllerSyncClientboundPayload(configs.stream().filter(c -> c.graphs != null).flatMap(c -> c.graphs.stream()).toList(), descriptors, entity.getBlockPos(), Optional.ofNullable(entity.lastViewedPatch)));
     }
 
     public static Stream<Node> getNodes(List<StorageConfiguration> configs) {

@@ -266,6 +266,12 @@ public class Patchwork {
                 }
         );
 
+        registrar.playToServer(NotifyViewedPatchServerboundPayload.TYPE, NotifyViewedPatchServerboundPayload.CODEC, (payload, context) -> {
+            if(context.player().level().getBlockEntity(payload.controllerPos()) instanceof SFControllerBlockEntity be) {
+                be.lastViewedPatch = payload.patch();
+            }
+        });
+
         registrar.playToClient(
                 CacheBlockStateClientboundPayload.TYPE,
                 CacheBlockStateClientboundPayload.CODEC,
@@ -288,14 +294,20 @@ public class Patchwork {
                         UUID currentGraphId = null;
                         HashMap<UUID, Vec2> oldPositions = null;
 
+                        editor.state.patchGraphs = new ArrayList<>(payload.patches());
+                        editor.state.serverProvidedDescriptors = new ArrayList<>(payload.nodeDescriptors());
+
                         if(editor.state.getCurrentGraph() != null) {
                             currentGraphId = editor.state.getCurrentGraph().graphId;
                             oldPositions = editor.state.getCurrentGraph().nodePositions;
+                        } else {
+                            payload.view().ifPresent(id -> {
+                                var current = payload.patches().stream().filter(p -> p.graphId.equals(id)).findFirst();
+                                current.ifPresent(editor::setGraph);
+                            });
                         }
 
                         editor.state.controllerPos = payload.controllerPos();
-                        editor.state.patchGraphs = new ArrayList<>(payload.patches());
-                        editor.state.serverProvidedDescriptors = new ArrayList<>(payload.nodeDescriptors());
 
                         if(editor.state.getCurrentGraph() == null && !editor.state.patchGraphs.isEmpty()) editor.setGraph(editor.state.patchGraphs.get(0));
 
@@ -379,7 +391,7 @@ public class Patchwork {
 
                                 serverLevel.getDataStorage().computeIfAbsent(new SavedData.Factory<>(ServerSavedData::create, ServerSavedData::load), "configs").setDirty();
 
-                                StorageConfiguration.syncToPlayer(configs, graph, serverLevel, (ServerPlayer) context.player(), payload.pos());
+                                StorageConfiguration.syncToPlayer(configs, graph, serverLevel, (ServerPlayer) context.player(), e);
                             }
                         }
                     }
@@ -401,7 +413,7 @@ public class Patchwork {
                             config.graphs.add(patch);
                             e.setChanged();
 
-                            StorageConfiguration.syncToPlayer(configs, graph, (ServerLevel) context.player().level(), (ServerPlayer) context.player(), payload.pos());
+                            StorageConfiguration.syncToPlayer(configs, graph, (ServerLevel) context.player().level(), (ServerPlayer) context.player(), e);
 
                             ((ServerLevel) context.player().level()).getDataStorage().computeIfAbsent(new SavedData.Factory<>(ServerSavedData::create, ServerSavedData::load), "configs").setDirty();
 

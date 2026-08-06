@@ -21,6 +21,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.joml.Matrix3x2f;
 import org.lwjgl.glfw.GLFW;
 import party.stoat.patchwork.Patchwork;
+import party.stoat.patchwork.network.NotifyViewedPatchServerboundPayload;
 import party.stoat.patchwork.patchgraph.StorageConfiguration;
 import party.stoat.patchwork.block.sf_controller.SFControllerMenu;
 import party.stoat.patchwork.client.Bezier4;
@@ -384,6 +385,8 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> impl
     }
 
     public void setGraph(PatchGraph graph) {
+        if(this.state.controllerPos != null) PacketDistributor.sendToServer(new NotifyViewedPatchServerboundPayload(this.state.controllerPos, graph.graphId));
+
         this.state.currentGraph = this.state.patchGraphs.indexOf(graph);
         if(this.state.getCurrentGraph() == null) return;
         this.state.graphNodes.elements.clear();
@@ -488,7 +491,22 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> impl
     }
 
     @Override
+    protected void renderLabels(GuiGraphics p_281635_, int p_282681_, int p_283686_) {
+
+    }
+
+    @Override
+    public void renderBackground(GuiGraphics graphics, int p_295457_, int p_294596_, float p_296351_) {
+        super.renderBackground(graphics, p_295457_, p_294596_, p_296351_);
+
+        int tl = this.leftPos;
+        int tp = this.topPos + 65;
+        graphics.blit(CONTAINER_TEXTURE, tl, tp, 0, 0, -10, 256, 256, 256, 256);
+    }
+
+    @Override
     public void render(@NonNull GuiGraphics graphics, int mouseX, int mouseY, float a) {
+        super.render(graphics, mouseX, mouseY, a);
         this.drawEffects(graphics, mouseX, mouseY);
 
         if(this.lastLayout != null) this.lastLayout.paint(graphics);
@@ -498,10 +516,5 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> impl
                 this.lastLayout = new Many(List.of(this.root, saveButton)).extractLayout(0, 0, 0);
             } else this.lastLayout = this.root.extractLayout(0, 0, 0);
         }
-
-        int tl = this.leftPos - 8;
-        int tp = this.topPos - 9;
-        graphics.blit(CONTAINER_TEXTURE, tl, tp, tl + 256, tp + 256, 0, 1, 0, 1);
-        super.render(graphics, mouseX, mouseY, a);
     }
 }

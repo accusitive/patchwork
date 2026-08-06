@@ -72,8 +72,8 @@ public class SFCable extends Block implements SFNetworkConnectable {
         if(state.getValue(EAST)) shape = Shapes.join(shape, parts.get(Direction.EAST), BooleanOp.OR);
         if(state.getValue(SOUTH)) shape = Shapes.join(shape, parts.get(Direction.SOUTH), BooleanOp.OR);
         if(state.getValue(WEST)) shape = Shapes.join(shape, parts.get(Direction.WEST), BooleanOp.OR);
-        if(state.getValue(UP)) shape = Shapes.join(shape, parts.get(Direction.UP), BooleanOp.OR);
-        if(state.getValue(DOWN)) shape = Shapes.join(shape, parts.get(Direction.DOWN), BooleanOp.OR);
+        if(state.getValue(UP)) shape = Shapes.join(shape, parts.get(Direction.DOWN), BooleanOp.OR);
+        if(state.getValue(DOWN)) shape = Shapes.join(shape, parts.get(Direction.UP), BooleanOp.OR);
 
         return shape;
     }

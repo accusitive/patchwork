@@ -91,7 +91,7 @@ public class SFInterface extends DirectionalBlock implements SFNetworkConnectabl
                 Shapes.create(7.0 / 16.0, 7.0 / 16.0, 3.0 / 16.0, 9.0 / 16.0, 9.0 / 16.0, 9.0 / 16.0), BooleanOp.OR
         );
 
-        shape = ShapeUtils.rotateAll(shape).get(state.getValue(FACING));
+        shape = ShapeUtils.rotateAll(shape).get(state.getValue(FACING) == Direction.UP || state.getValue(FACING) == Direction.DOWN ? state.getValue(FACING).getOpposite() : state.getValue(FACING));
 
         VoxelShape part = Shapes.create(7.0 / 16.0, 7.0 / 16.0, 0.0, 9.0 / 16.0, 9.0 / 16.0, 7.0 / 16.0);
 
@@ -116,13 +116,6 @@ public class SFInterface extends DirectionalBlock implements SFNetworkConnectabl
         state = state.setValue(DOWN, level.getBlockState(pos.relative(Direction.DOWN)).getBlock() instanceof SFNetworkConnectable && state.getValue(FACING) != Direction.DOWN);
 
         return state;
-    }
-
-    @Override
-    protected RenderShape getRenderShape(BlockState state) {
-
-
-        return super.getRenderShape(state);
     }
 
     @Override

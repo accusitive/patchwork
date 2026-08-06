@@ -37,7 +37,7 @@ public class ImageButton extends AbstractButton {
     public void paint(GuiGraphics g, Layout l) {
         super.paint(g, l);
 
-        g.blit(this.image, this.paddingX, this.paddingY, this.width + this.paddingX, this.height + this.paddingY, 0, 1, 0, 1);
+        g.blit(this.image, this.paddingX, this.paddingY, 0, 0, this.width, this.height, this.width, this.height);
 
         if(this.highlight) {
             g.fill(this.paddingX + 1, this.paddingY + 1, this.width + this.paddingX - 1, this.height + this.paddingY - 1, 0x22ffffff);

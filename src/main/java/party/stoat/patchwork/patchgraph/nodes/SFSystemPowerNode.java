@@ -23,45 +23,6 @@ public class SFSystemPowerNode extends Node {
 
     @Override
     public void tick(StorageConfiguration config, PatchInstance patch, ServerLevel level, BlockGraph network, SFControllerBlockEntity controller) {
-//        var outputs = this.getOutputConnections(patch.graph);
-//
-//        for(var connection : outputs) {
-//            var connectedNode = patch.nodes.get(connection.to());
-//            var foreignPort = connectedNode.getDescriptor().getPort(connection.keyTo());
-//
-//            if(foreignPort == null) continue;
-//
-//            if(foreignPort.d().d() != NodeDescriptor.DataType.Energy) continue;
-//
-//            var storage = controller.storage;
-//
-//            var foreignStorage = connectedNode.getEnergyHandler(level, foreignPort, patch);
-//
-//            if(foreignStorage == null) continue;
-//
-//            succeedAll: try(Transaction inner = Transaction.open(context)) {
-//
-//                int toInsert = 0;
-//
-//                try(Transaction initial = Transaction.open(inner)) {
-//                    var extracted = storage.extract(Math.min(foreignStorage.getCapacityAsInt(), 10000), initial);
-//                    var inserted = foreignStorage.insert(extracted, initial);
-//
-//                    if(inserted < extracted) {
-//                        toInsert = inserted;
-//                    } else if(inserted == extracted) {
-//                        initial.commit();
-//                        inner.commit();
-//                        break succeedAll;
-//                    }
-//                }
-//
-//                var extracted = storage.extract(toInsert, inner);
-//                var inserted = foreignStorage.insert(toInsert, inner);
-//
-//                if(inserted == extracted) inner.commit();
-//            }
-//        }
     }
 
     @Override

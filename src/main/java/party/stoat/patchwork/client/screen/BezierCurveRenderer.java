@@ -67,12 +67,9 @@ public final class BezierCurveRenderer {
             float y4 = ortho2.add(b).y;
 
             vertexConsumer.addVertex(pose, x1, y1, 0).setColor(color);
-            vertexConsumer.addVertex(pose, x2, y2, 0).setColor(color);
             vertexConsumer.addVertex(pose, x3, y3, 0).setColor(color);
-
-            vertexConsumer.addVertex(pose, x2, y2, 0).setColor(color);
             vertexConsumer.addVertex(pose, x4, y4, 0).setColor(color);
-            vertexConsumer.addVertex(pose, x3, y3, 0).setColor(color);
+            vertexConsumer.addVertex(pose, x2, y2, 0).setColor(color);
         }
     }
 }

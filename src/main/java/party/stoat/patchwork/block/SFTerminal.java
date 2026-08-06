@@ -102,7 +102,7 @@ public class SFTerminal extends DirectionalBlock implements SFNetworkConnectable
 
                     var configs = StorageConfiguration.getConfigurationsFromNetwork(graph);
 
-                    StorageConfiguration.syncToPlayer(configs, graph, serverLevel, e.watcher, e.getBlockPos());
+                    StorageConfiguration.syncToPlayer(configs, graph, serverLevel, e.watcher, e);
 
                     break;
                 }

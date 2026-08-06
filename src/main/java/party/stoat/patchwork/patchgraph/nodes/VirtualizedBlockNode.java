@@ -25,7 +25,7 @@ import java.util.UUID;
 
 public class VirtualizedBlockNode extends Node {
 
-    private static final ResourceLocation IDENTIFIER = ResourceLocation.fromNamespaceAndPath(Patchwork.MOD_ID, "patch_nodes/container_node");
+    public static final ResourceLocation IDENTIFIER = ResourceLocation.fromNamespaceAndPath(Patchwork.MOD_ID, "patch_nodes/container_node");
 
     public BlockPos proxyPos;
 
