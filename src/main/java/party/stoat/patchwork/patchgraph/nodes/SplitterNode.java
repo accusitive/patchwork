@@ -5,6 +5,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.IItemHandler;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.jetbrains.annotations.NotNull;
 import party.stoat.patchwork.Patchwork;
 import party.stoat.patchwork.block.PatchworkHandler;
 import party.stoat.patchwork.patchgraph.Node;
@@ -25,117 +26,91 @@ public class SplitterNode extends Node {
     }
 
     record SplitterItemHandler(List<IItemHandler> handlers) implements IItemHandler {
-
         @Override
         public int getSlots() {
-            return handlers.stream().mapToInt(IItemHandler::getSlots).sum();
+            // Virtual handler acts as a single insertion point.
+            return 1;
         }
 
         @Override
-        public ItemStack getStackInSlot(int slot) {
-            IItemHandler handler = handlerForSlot(slot);
-
-            if (handler == null) return ItemStack.EMPTY;
-
-            return handler.getStackInSlot(localSlot(slot));
+        public @NotNull ItemStack getStackInSlot(int slot) {
+            return ItemStack.EMPTY;
         }
 
         @Override
-        public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
-            if (handlers.isEmpty() || stack.isEmpty()) return stack;
+        public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+            if (stack.isEmpty() || handlers.isEmpty())
+                return stack;
 
             ItemStack remaining = stack.copy();
-            int per = stack.getCount() / handlers.size();
-            if (per > 0) {
+
+            int handlerCount = handlers.size();
+
+            // First pass: attempt even distribution.
+            int baseAmount = stack.getCount() / handlerCount;
+            int extra = stack.getCount() % handlerCount;
+
+            for (int i = 0; i < handlerCount && !remaining.isEmpty(); i++) {
+                int desired = baseAmount + (i < extra ? 1 : 0);
+
+                if (desired <= 0)
+                    continue;
+
+                ItemStack portion = remaining.copy();
+                portion.setCount(Math.min(desired, remaining.getCount()));
+
+                ItemStack remainder = insertIntoHandler(handlers.get(i), portion, simulate);
+
+                int inserted = portion.getCount() - remainder.getCount();
+
+                if (inserted > 0)
+                    remaining.shrink(inserted);
+            }
+
+            // Second pass: greedily consume any leftovers.
+            if (!remaining.isEmpty()) {
                 for (IItemHandler handler : handlers) {
+                    if (remaining.isEmpty())
+                        break;
 
-                    ItemStack part = stack.copy();
-                    part.setCount(per);
-
-                    ItemStack leftover =
-                            handler.insertItem(0, part, simulate);
-
-                    remaining.shrink(per - leftover.getCount());
+                    remaining = insertIntoHandler(handler, remaining, simulate);
                 }
             }
 
-            while (!remaining.isEmpty()) {
+            return remaining;
+        }
 
-                boolean inserted = false;
+        private static ItemStack insertIntoHandler(IItemHandler handler,
+                                                   ItemStack stack,
+                                                   boolean simulate) {
+            ItemStack remaining = stack.copy();
 
-                for (IItemHandler handler : handlers) {
-
-                    ItemStack one = remaining.copy();
-                    one.setCount(1);
-
-                    ItemStack leftover =
-                            handler.insertItem(0, one, simulate);
-
-                    if (leftover.isEmpty()) {
-                        remaining.shrink(1);
-                        inserted = true;
-
-                        if (remaining.isEmpty())
-                            break;
-                    }
-                }
-
-                if (!inserted)
-                    break;
+            for (int slot = 0; slot < handler.getSlots() && !remaining.isEmpty(); slot++) {
+                remaining = handler.insertItem(slot, remaining, simulate);
             }
 
             return remaining;
         }
 
         @Override
-        public ItemStack extractItem(int slot, int amount, boolean simulate) {
+        public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
             return ItemStack.EMPTY;
         }
 
         @Override
         public int getSlotLimit(int slot) {
-            IItemHandler handler = handlerForSlot(slot);
-
-            if (handler == null)
-                return 0;
-
-            return handler.getSlotLimit(localSlot(slot));
+            return Integer.MAX_VALUE;
         }
 
         @Override
-        public boolean isItemValid(int slot, ItemStack stack) {
-            IItemHandler handler = handlerForSlot(slot);
-
-            return handler != null &&
-                    handler.isItemValid(localSlot(slot), stack);
-        }
-
-        private IItemHandler handlerForSlot(int slot) {
-            int offset = 0;
-
-            for (IItemHandler handler : handlers) {
-                int slots = handler.getSlots();
-                if (slot < offset + slots) {
-                    return handler;
+        public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+            return handlers.stream().anyMatch(handler -> {
+                for (int i = 0; i < handler.getSlots(); i++) {
+                    if (handler.isItemValid(i, stack))
+                        return true;
                 }
-                offset += slots;
-            }
-
-            return null;
-        }
-
-        private int localSlot(int slot) {
-            int offset = 0;
-
-            for (IItemHandler handler : handlers) {
-                int slots = handler.getSlots();
-                if (slot < offset + slots) {
-                    return slot - offset;
-                }
-                offset += slots;
-            }
-
-            return -1;
+                return false;
+            });
         }
     }
 

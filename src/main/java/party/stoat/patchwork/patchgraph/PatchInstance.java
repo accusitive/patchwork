@@ -22,7 +22,10 @@ public class PatchInstance {
 
         for(var nodeId : graph.nodeDescriptors.keySet()) {
             var nodeDescriptor = graph.nodeDescriptors.get(nodeId);
-            var node = Nodes.nodeConstructors.get(nodeDescriptor.identifier()).create(nodeId, nodeDescriptor);
+            if(nodeDescriptor == null) continue;
+            var constructor = Nodes.nodeConstructors.get(nodeDescriptor.identifier());
+            if(constructor == null) continue;
+            var node = constructor.create(nodeId, nodeDescriptor);
 
             if(nodeDescriptor.configuration() != null) node.acceptConfiguration(nodeDescriptor.configuration());
 

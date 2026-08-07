@@ -2,9 +2,9 @@
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    "minecraft:netherite_ingot",
-    "minecraft:redstone",
-    "alltheores:gold_dust"
+    {"item": "minecraft:netherite_ingot"},
+    {"item": "minecraft:redstone"},
+    {"item": "alltheores:gold_dust"}
   ],
   "result": {
     "count": 12,

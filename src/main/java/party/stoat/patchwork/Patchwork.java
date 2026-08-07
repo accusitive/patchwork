@@ -13,6 +13,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.profiling.jfr.event.ChunkGenerationEvent;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.inventory.MenuType;
@@ -26,6 +27,7 @@ import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLDedicatedServerSetupEvent;
 import net.neoforged.neoforge.capabilities.BlockCapability;
 import net.neoforged.neoforge.capabilities.Capabilities;
@@ -287,42 +289,7 @@ public class Patchwork {
                 }
         );
         registrar.playToClient(
-                SFControllerSyncClientboundPayload.TYPE, SFControllerSyncClientboundPayload.CODEC, (payload, context) -> {
-                    var mc = Minecraft.getInstance();
-
-                    if(mc.screen instanceof EditorScreen editor) {
-                        UUID currentGraphId = null;
-                        HashMap<UUID, Vec2> oldPositions = null;
-
-                        editor.state.patchGraphs = new ArrayList<>(payload.patches());
-                        editor.state.serverProvidedDescriptors = new ArrayList<>(payload.nodeDescriptors());
-
-                        if(editor.state.getCurrentGraph() != null) {
-                            currentGraphId = editor.state.getCurrentGraph().graphId;
-                            oldPositions = editor.state.getCurrentGraph().nodePositions;
-                        } else {
-                            payload.view().ifPresent(id -> {
-                                var current = payload.patches().stream().filter(p -> p.graphId.equals(id)).findFirst();
-                                current.ifPresent(editor::setGraph);
-                            });
-                        }
-
-                        editor.state.controllerPos = payload.controllerPos();
-
-                        if(editor.state.getCurrentGraph() == null && !editor.state.patchGraphs.isEmpty()) editor.setGraph(editor.state.patchGraphs.get(0));
-
-                        if(currentGraphId != null) {
-                            for(var graph : editor.state.patchGraphs) if(graph.graphId.equals(currentGraphId)) editor.setGraph(graph);
-                        }
-
-                        if(oldPositions != null && editor.state.getCurrentGraph() != null) {
-                            editor.state.getCurrentGraph().nodePositions.putAll(oldPositions);
-                        }
-
-                        editor.state.editorDirty = false;
-                        editor.refresh(mc.getWindow().getGuiScaledWidth(), mc.getWindow().getGuiScaledHeight());
-                    }
-                }
+                SFControllerSyncClientboundPayload.TYPE, SFControllerSyncClientboundPayload.CODEC, SFControllerSyncClientboundPayload::handle
         );
         registrar.playToServer(
                 OpenRemoteMachineServerboundPayload.TYPE, OpenRemoteMachineServerboundPayload.CODEC, (payload, context) -> {
@@ -357,12 +324,21 @@ public class Patchwork {
                                             containerNode.proxyPos
                                     ));
 
-                                    blockState.useWithoutItem(level, context.player(), new BlockHitResult(
-                                            new Vec3(containerNode.proxyPos.getX(), containerNode.proxyPos.getY(), containerNode.proxyPos.getZ()),
-                                            Direction.NORTH,
-                                            containerNode.proxyPos,
-                                            false
-                                    ));
+                                    if (context.player().getMainHandItem().isEmpty()) {
+                                        blockState.useWithoutItem(level, context.player(), new BlockHitResult(
+                                                new Vec3(containerNode.proxyPos.getX(), containerNode.proxyPos.getY(), containerNode.proxyPos.getZ()),
+                                                Direction.NORTH,
+                                                containerNode.proxyPos,
+                                                false
+                                        ));
+                                    } else {
+                                        blockState.useItemOn(context.player().getMainHandItem(), level, context.player(), InteractionHand.MAIN_HAND, new BlockHitResult(
+                                                new Vec3(containerNode.proxyPos.getX(), containerNode.proxyPos.getY(), containerNode.proxyPos.getZ()),
+                                                Direction.NORTH,
+                                                containerNode.proxyPos,
+                                                false
+                                        ));
+                                    }
 
                                     break outer;
                                 }

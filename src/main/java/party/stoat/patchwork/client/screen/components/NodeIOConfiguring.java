@@ -27,7 +27,7 @@ public class NodeIOConfiguring extends Renderable {
 
     public NodeIOConfiguring(String display, String key, UUID owner, boolean rightAlign, boolean disabled, NodeDescriptor.DataType type, Optional<Direction> direction, AbstractButton.ButtonHandler handler) {
         this.port = new NodeIOPort(key, owner, type);
-        this.display = new TextInput(display, 100, EditorScreen.FONT.lineHeight);
+        this.display = new TextInput(display, 80, EditorScreen.FONT.lineHeight + 1);
         this.rightAlign = rightAlign;
         this.disabled = disabled;
         this.type = type;
@@ -59,11 +59,15 @@ public class NodeIOConfiguring extends Renderable {
         Layout removeLayout;
 
         var l = this.typeSelector.extractLayout(0, 0, 0);
-        dirLayout = this.directionSelector.extractLayout(l.width(), 0, 0);
-        removeLayout = this.remove.extractLayout(dirLayout.x() + dirLayout.width(), 0, 0);
-        displayLayout = display.extractLayout(40, 0, 0);
+        dirLayout = this.directionSelector.extractLayout(l.width() + 1, 0, 0);
+        removeLayout = this.remove.extractLayout(dirLayout.x() + dirLayout.width() + 1, 0, 0);
+        displayLayout = display.extractLayout(44, 0, 0);
 
-        return new Layout(x, y, z, 180, EditorScreen.FONT.lineHeight, this, List.of(displayLayout, l, dirLayout, removeLayout, removeLayout), this.disabled);
+        var children = List.of(removeLayout, displayLayout, l, dirLayout);
+//        var children = List.of(displayLayout);
+
+
+        return new Layout(x, y, z, 180, EditorScreen.FONT.lineHeight, this, children, this.disabled);
     }
 
 }

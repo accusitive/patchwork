@@ -2,10 +2,10 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "key": {
-    "A": "patchwork:superconducting_ingot",
-    "B": "#minecraft:shulker_boxes",
-    "C": "minecraft:nether_star",
-    "D": "minecraft:glass"
+    "A": { "item": "patchwork:superconducting_ingot" },
+    "B": { "item": "minecraft:shulker_box" },
+    "C": { "item": "minecraft:nether_star" },
+    "D": { "item": "minecraft:glass" }
   },
   "pattern": [
     "ADA",

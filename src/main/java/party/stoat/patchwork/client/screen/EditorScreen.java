@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.core.BlockPos;
@@ -36,7 +35,7 @@ import party.stoat.patchwork.patchgraph.nodes.SplitterNode;
 import javax.annotation.Nullable;
 import java.util.*;
 
-public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> implements GuiEventListener {
+public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> {
 
     public static Font FONT = Minecraft.getInstance().font;
 
@@ -204,7 +203,7 @@ public class EditorScreen extends AbstractContainerScreen<SFControllerMenu> impl
         }
 
         if(key == GLFW.GLFW_KEY_LEFT_SHIFT) state.shiftPressed = true;
-        
+
         if(key == GLFW.GLFW_KEY_DELETE) {
             for(var node : state.selectedNodes) {
                 if(state.getCurrentGraph() == null) break;

@@ -2,10 +2,14 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "key": {
-    "A": "patchwork:superconducting_ingot",
-    "B": "patchwork:t1_storage_cell",
-    "C": "minecraft:end_crystal",
-    "D": "minecraft:glass"
+    "A": {
+      "item": "patchwork:superconducting_ingot"
+    },
+    "B": {
+      "item": "patchwork:t1_storage_cell"
+    },
+    "C": { "item": "minecraft:end_crystal" },
+    "D": { "item": "minecraft:glass" }
   },
   "pattern": [
     "ADA",

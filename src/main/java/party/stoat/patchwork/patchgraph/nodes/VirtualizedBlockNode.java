@@ -25,7 +25,7 @@ import java.util.UUID;
 
 public class VirtualizedBlockNode extends Node {
 
-    public static final ResourceLocation IDENTIFIER = ResourceLocation.fromNamespaceAndPath(Patchwork.MOD_ID, "patch_nodes/container_node");
+    public static final ResourceLocation IDENTIFIER = ResourceLocation.fromNamespaceAndPath(Patchwork.MOD_ID, "virtual");
 
     public BlockPos proxyPos;
 
@@ -80,121 +80,160 @@ public class VirtualizedBlockNode extends Node {
                     if (!ModList.get().isLoaded("mekanism")) continue;
 
                     var storage = getChemicalHandler(level, port, patchInstance);
-                    var foreignStorage = connectedNode.getChemicalHandler(level, foreignPort, patchInstance);
-                    if (storage == null || foreignStorage == null) continue;
+                    var target = connectedNode.getChemicalHandler(level, foreignPort, patchInstance);
 
-                    for (int localIndex = 0; localIndex < storage.getChemicalTanks(); localIndex++) {
-                        ChemicalStack resource = storage.getChemicalInTank(localIndex);
-                        if (resource.isEmpty()) continue;
+                    if (storage == null || target == null)
+                        continue;
 
-                        for (int foreignIndex = 0; foreignIndex < foreignStorage.getChemicalTanks(); foreignIndex++) {
-                            // Simulate extraction
-                            ChemicalStack extracted = storage.extractChemical(localIndex, resource.getAmount(), Action.SIMULATE);
+                    for (int sourceTank = 0; sourceTank < storage.getChemicalTanks(); sourceTank++) {
+                        var chemical = storage.getChemicalInTank(sourceTank);
 
-                            if (extracted.isEmpty()) continue;
+                        if (chemical.isEmpty())
+                            continue;
 
-                            // Simulate insertion
-                            ChemicalStack remainder = foreignStorage.insertChemical(foreignIndex, extracted, Action.SIMULATE);
-                            long insertedAmount = extracted.getAmount() - remainder.getAmount();
-                            if (insertedAmount <= 0) continue;
+                        // Simulate extraction
+                        var simulatedExtract = storage.extractChemical(
+                                chemical.getAmount(),
+                                Action.SIMULATE
+                        );
 
-                            // Extract only what can fit
-                            ChemicalStack toTransfer = extracted.copy();
-                            toTransfer.setAmount(insertedAmount);
+                        if (simulatedExtract.isEmpty())
+                            continue;
 
-                            // Execute extraction
-                            ChemicalStack actualExtracted = storage.extractChemical(localIndex, insertedAmount, Action.EXECUTE);
-                            if (actualExtracted.isEmpty())
-                                continue;
+                        // Simulate insertion
+                        var simulatedRemainder = target.insertChemical(
+                                simulatedExtract.copy(),
+                                Action.SIMULATE
+                        );
 
-                            // Execute insertion
-                            ChemicalStack insertRemainder = foreignStorage.insertChemical(foreignIndex, actualExtracted, Action.EXECUTE);
-                            // Normally this should be empty unless the machine changed between calls
-                            if (!insertRemainder.isEmpty()) {
-                                // optional: handle failed remainder
-                            }
+                        long accepted = simulatedExtract.getAmount() - simulatedRemainder.getAmount();
 
-                            break;
+                        if (accepted <= 0)
+                            continue;
+
+                        // Actually extract exactly what the target accepted
+                        var extracted = storage.extractChemical(
+                                accepted,
+                                Action.EXECUTE
+                        );
+
+                        if (extracted.isEmpty())
+                            continue;
+
+                        // Actually insert
+                        var leftover = target.insertChemical(
+                                extracted,
+                                Action.EXECUTE
+                        );
+
+                        // Should not happen, but prevent loss if something changed
+                        if (!leftover.isEmpty()) {
+                            storage.insertChemical(leftover, Action.EXECUTE);
                         }
                     }
                 }
                 case Item -> {
 
                     var storage = getItemHandler(level, port, patchInstance);
-
                     var target = connectedNode.getItemHandler(level, foreignPort, patchInstance);
 
                     if (storage == null || target == null)
                         continue;
 
-
-                    for (int slot = 0; slot < storage.getSlots(); slot++) {
-
-                        var stack = storage.getStackInSlot(slot);
+                    for (int sourceSlot = 0; sourceSlot < storage.getSlots(); sourceSlot++) {
+                        var stack = storage.getStackInSlot(sourceSlot);
 
                         if (stack.isEmpty())
                             continue;
 
+                        var simulatedExtract = storage.extractItem(sourceSlot, stack.getCount(), true);
 
-                        // simulate insertion
-                        var remainder = target.insertItem(0, stack, true);
-
-                        int amount = stack.getCount() - remainder.getCount();
-
-                        if (amount <= 0)
+                        if (simulatedExtract.isEmpty())
                             continue;
 
+                        var remaining = simulatedExtract.copy();
 
-                        // actually extract
-                        var extracted = storage.extractItem(slot, amount, false);
+                        for (int targetSlot = 0; targetSlot < target.getSlots() && !remaining.isEmpty(); targetSlot++) {
+                            remaining = target.insertItem(targetSlot, remaining, true);
+                        }
+
+                        int accepted = simulatedExtract.getCount() - remaining.getCount();
+
+                        if (accepted <= 0)
+                            continue;
+
+                        var extracted = storage.extractItem(sourceSlot, accepted, false);
 
                         if (extracted.isEmpty())
                             continue;
 
+                        var leftover = extracted;
 
-                        // actually insert
-                        target.insertItem(0, extracted, false);
+                        for (int targetSlot = 0; targetSlot < target.getSlots() && !leftover.isEmpty(); targetSlot++) {
+                            leftover = target.insertItem(targetSlot, leftover, false);
+                        }
+
+                        if (!leftover.isEmpty()) {
+                            for (int targetSlot = 0; targetSlot < storage.getSlots() && !leftover.isEmpty(); targetSlot++) {
+                                leftover = storage.insertItem(targetSlot, leftover, false);
+                            }
+                        }
                     }
                 }
                 case Fluid -> {
-
                     var storage = getFluidHandler(level, port, patchInstance);
                     var target = connectedNode.getFluidHandler(level, foreignPort, patchInstance);
 
-                    if(storage == null || target == null)
+                    if (storage == null || target == null)
                         continue;
 
+                    for (int sourceTank = 0; sourceTank < storage.getTanks(); sourceTank++) {
+                        var fluid = storage.getFluidInTank(sourceTank);
 
-                    for(int tank = 0; tank < storage.getTanks(); tank++) {
-
-                        var fluid = storage.getFluidInTank(tank);
-
-                        if(fluid.isEmpty())
+                        if (fluid.isEmpty())
                             continue;
 
+                        // Simulate extraction
+                        var simulatedExtract = storage.drain(fluid, IFluidHandler.FluidAction.SIMULATE);
 
-                        var simulated = fluid.copy();
-
-                        int accepted =
-                                target.fill(simulated, IFluidHandler.FluidAction.SIMULATE);
-
-
-                        if(accepted <= 0)
+                        if (simulatedExtract.isEmpty())
                             continue;
 
+                        // Simulate insertion into target
+                        int accepted = 0;
+                        var remaining = simulatedExtract.copy();
 
-                        var extracted =
-                                storage.drain(
-                                        fluid.copyWithAmount(accepted),
-                                        IFluidHandler.FluidAction.EXECUTE
-                                );
+                        for (int targetTank = 0; targetTank < target.getTanks() && !remaining.isEmpty(); targetTank++) {
+                            var inserted = target.fill(remaining, IFluidHandler.FluidAction.SIMULATE);
 
+                            if (inserted > 0) {
+                                accepted += inserted;
+                                remaining.shrink(inserted);
+                            }
+                        }
 
-                        if(!extracted.isEmpty()) {
-                            target.fill(
-                                    extracted,
-                                    IFluidHandler.FluidAction.EXECUTE
-                            );
+                        if (accepted <= 0)
+                            continue;
+
+                        // Actually extract
+                        var extracted = storage.drain(accepted, IFluidHandler.FluidAction.EXECUTE);
+
+                        if (extracted.isEmpty())
+                            continue;
+
+                        // Actually insert
+                        var leftover = extracted.copy();
+
+                        for (int targetTank = 0; targetTank < target.getTanks() && !leftover.isEmpty(); targetTank++) {
+                            int inserted = target.fill(leftover, IFluidHandler.FluidAction.EXECUTE);
+
+                            if (inserted > 0)
+                                leftover.shrink(inserted);
+                        }
+
+                        // Rollback if target changed unexpectedly
+                        if (!leftover.isEmpty()) {
+                            storage.fill(leftover, IFluidHandler.FluidAction.EXECUTE);
                         }
                     }
                 }

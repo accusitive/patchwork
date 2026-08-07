@@ -2,6 +2,7 @@ package party.stoat.patchwork.virtual;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.SectionPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.BlockItem;
@@ -38,7 +39,7 @@ public class VirtualManager {
             int y = (((count / 9) * 5) % worldHeight) + level.dimensionType().minY();
             int z = -(level.getWorldBorder().getAbsoluteMaxSize() + 16);
 
-            level.setChunkForced(x / 16, z / 16, true);
+            level.setChunkForced(SectionPos.blockToSectionCoord(x), SectionPos.blockToSectionCoord(z), true);
 
             var pos = new BlockPos(x + relX, y, z + relZ);
             data.virtualized.add(pos);

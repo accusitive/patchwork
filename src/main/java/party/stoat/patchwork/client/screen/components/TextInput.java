@@ -36,9 +36,8 @@ public class TextInput extends Renderable {
     public void paint(GuiGraphics g, Layout l) {
         super.paint(g, l);
 
-        g.fill(0, 0, l.width(), l.height(), this.highlight ? this.highlightedColor : this.backgroundColor);
-//        this.editBox.setValue("yuuup");
-        this.editBox.render(g, 0, 0, 1.0f);
+        this.editBox.render(g, -l.x(), -l.y(), 1.0f);
+//        g.fill(0, 0, l.width(), l.height(), 0xffffffff);
     }
 
     @Override
@@ -74,14 +73,16 @@ public class TextInput extends Renderable {
 
     @Override
     public void onKeyUp(int key, int scancode, int mods) {
-        this.editBox.keyPressed(key, scancode, mods);
+        this.editBox.keyReleased(key, scancode, mods);
     }
 
     @Override
     protected Layout extractInnerLayout(int x, int y, int z) {
         this.editBox.setX(x);
         this.editBox.setY(y);
+        this.editBox.setWidth(this.width);
+        this.editBox.setHeight(this.height);
 
-        return new Layout(x, y, z, this.width + x, this.height + y, this, List.of(), false);
+        return new Layout(x, y, z, this.width, this.height, this, List.of(), false);
     }
 }

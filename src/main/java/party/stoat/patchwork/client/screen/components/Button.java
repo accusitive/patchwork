@@ -13,12 +13,12 @@ public class Button extends AbstractButton {
     public int width;
     public int height;
 
-    private final ButtonHandler onClick;
-
     public int backgroundColor = FastColor.ARGB32.color(255, 100, 100, 100);
     public int highlightedColor = FastColor.ARGB32.color(255, 150, 150, 150);
 
     public boolean highlight = false;
+
+    private ButtonHandler onClick;
 
     public Button(String content, int width, int height, ButtonHandler onClick) {
         super(width, height, onClick);
@@ -26,7 +26,6 @@ public class Button extends AbstractButton {
         this.text = new Text(content, 0xffffffff);
         this.width = width;
         this.height = height;
-        this.onClick = onClick;
     }
 
     @Override

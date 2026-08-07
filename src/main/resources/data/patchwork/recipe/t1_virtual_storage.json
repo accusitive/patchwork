@@ -2,8 +2,8 @@
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    "patchwork:storage_housing",
-    "patchwork:t1_storage_cell"
+    {"item": "patchwork:storage_housing"},
+    {"item": "patchwork:t1_storage_cell"}
   ],
   "result": {
     "count": 1,

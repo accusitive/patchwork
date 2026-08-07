@@ -3,10 +3,7 @@ package party.stoat.patchwork.block.sf_controller;
 import com.google.gson.Gson;
 import com.kneelawk.graphlib.api.graph.BlockGraph;
 import com.kneelawk.graphlib.api.util.NodePos;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.core.NonNullList;
-import net.minecraft.core.UUIDUtil;
+import net.minecraft.core.*;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
@@ -99,7 +96,7 @@ public class SFControllerBlockEntity extends BlockEntity implements MenuProvider
             for(var instance : config.instances.values()) {
                 for(var node : instance.nodes.values()) {
                     if(node instanceof VirtualizedBlockNode virtual) {
-                        serverLevel.setChunkForced(virtual.proxyPos.getX() / 16, virtual.proxyPos.getZ() / 16, true);
+                        serverLevel.setChunkForced(SectionPos.blockToSectionCoord(virtual.proxyPos.getX()), SectionPos.blockToSectionCoord(virtual.proxyPos.getZ()), true);
                         entity.loaded.add(virtual.proxyPos);
                     }
                 }

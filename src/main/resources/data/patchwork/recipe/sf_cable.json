@@ -2,9 +2,9 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "key": {
-    "A": "#minecraft:wool",
-    "B": "patchwork:mediation_core",
-    "C": "minecraft:redstone"
+    "A": { "item": "minecraft:white_wool" },
+    "B": { "item": "patchwork:mediation_core" },
+    "C": { "item": "minecraft:redstone" }
   },
   "pattern": [
     "AAA",

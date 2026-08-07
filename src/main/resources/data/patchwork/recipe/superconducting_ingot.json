@@ -1,5 +1,9 @@
 {
   "type": "minecraft:smelting",
-  "ingredient": "patchwork:superconducting_dust",
-  "result": "patchwork:superconducting_ingot"
+  "ingredient": {
+    "item": "patchwork:superconducting_dust"
+  },
+  "result": {
+    "id": "patchwork:superconducting_ingot"
+  }
 }
