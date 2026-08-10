@@ -12,7 +12,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec2;
 import net.neoforged.neoforge.network.PacketDistributor;
-import org.joml.Matrix3x2f;
 import party.stoat.patchwork.Patchwork;
 import party.stoat.patchwork.client.screen.EditorScreen;
 import party.stoat.patchwork.network.EjectVirtualizedMachineServerboundPayload;
@@ -52,7 +51,7 @@ public class RenderableGraphNode extends Renderable {
     public boolean configuringNode;
 
     private Text headerAsText;
-    private Many header;
+    private HorizontalList<Renderable> header;
     private TextInput nameInput;
     private PatchGraph graph;
 
@@ -61,6 +60,7 @@ public class RenderableGraphNode extends Renderable {
 
     boolean preview;
 
+    boolean displayDirectionAsRelative = false;
     public static final ResourceLocation VIRTUAL_NODE_IDENTIFIER = ResourceLocation.fromNamespaceAndPath(Patchwork.MOD_ID, "virtual");
 
     public RenderableGraphNode(NodeDescriptor d, UUID u, boolean preview) {
@@ -73,7 +73,16 @@ public class RenderableGraphNode extends Renderable {
         this.nameInput = new TextInput(d.title(), 100, 15);
         this.nameInput.offsetY = -2;
 
-        this.header = new Many(new ArrayList<>(List.of(this.headerAsText)));
+        var relativeButton = new Button(this.displayDirectionAsRelative ? "Relative" : "Cardinal", 64, 8, (btn, state) -> {
+            this.displayDirectionAsRelative = !this.displayDirectionAsRelative;
+
+            ((Button) this.header.elements.get(1)).text.content = this.displayDirectionAsRelative ? "Relative" : "Cardinal";
+        });
+
+        relativeButton.backgroundColor = (this.descriptor.color() & 0xFF000000) | ((((this.descriptor.color() & 0x00FF00FF) * 217) >> 8) & 0x00FF00FF) | ((((this.descriptor.color() & 0x0000FF00) * 217) >> 8) & 0x0000FF00);
+        ;
+        this.header = new HorizontalList<>(new ArrayList<>(List.of(this.headerAsText, relativeButton)), 0);
+
         header.offsetX = 5;
         header.offsetY = 5;
 
@@ -114,7 +123,6 @@ public class RenderableGraphNode extends Renderable {
             outputs.elements.add(this.openRemote);
         }
 
-        this.header.scissor = false;
 
         if (this.descriptor.identifier().equals(VIRTUAL_NODE_IDENTIFIER)) {
             this.ejectRemote = new ImageButton(EditorScreen.EJECT_TEXTURE, 16, 16, (btn, state) -> {
@@ -348,7 +356,7 @@ public class RenderableGraphNode extends Renderable {
 
                 for (var i : this.descriptor.inputs()) {
                     this.inputs.elements.add(
-                            new NodeIOConfiguring(i.name(), i.key(), this.uuid, false, false, i.d().d(), i.direction(), (btn1, state1) -> this.inputs.elements.removeIf(
+                            new NodeIOConfiguring(i.name(), i.key(), this.uuid, this, false, false, i.d().d(), i.direction(), (btn1, state1) -> this.inputs.elements.removeIf(
                                     e -> e instanceof NodeIOConfiguring io && io.port.key.equals(i.key())
                             ))
                     );
@@ -356,7 +364,7 @@ public class RenderableGraphNode extends Renderable {
 
                 for (var o : this.descriptor.outputs()) {
                     this.outputs.elements.add(
-                            new NodeIOConfiguring(o.name(), o.key(), this.uuid, true, false, o.d().d(), o.direction(), (btn2, state2) -> this.outputs.elements.removeIf(
+                            new NodeIOConfiguring(o.name(), o.key(), this.uuid, this, true, false, o.d().d(), o.direction(), (btn2, state2) -> this.outputs.elements.removeIf(
                                     e -> e instanceof NodeIOConfiguring io && io.port.key.equals(o.key())
                             ))
                     );
@@ -365,7 +373,7 @@ public class RenderableGraphNode extends Renderable {
                 var btn1 = new ImageButton(ImageButton.PLUS, 16, 16, (btn, stat1) -> {
                     var key = UUID.randomUUID().toString();
                     this.inputs.elements.add(this.inputs.elements.size() - 1,
-                            new NodeIOConfiguring("Unnamed input", key, this.uuid, false, false, NodeDescriptor.DataType.Item, Optional.of(Direction.NORTH), (btn3, state3) -> this.inputs.elements.removeIf(
+                            new NodeIOConfiguring("Unnamed input", key, this.uuid, this, false, false, NodeDescriptor.DataType.Item, Optional.of(Direction.NORTH), (btn3, state3) -> this.inputs.elements.removeIf(
                                     e -> e instanceof NodeIOConfiguring io && io.port.key.equals(key)
                             ))
                     );
@@ -376,7 +384,7 @@ public class RenderableGraphNode extends Renderable {
                 var btn2 = new ImageButton(ImageButton.PLUS, 16, 16, (btn, stt) -> {
                     var key = UUID.randomUUID().toString();
                     this.outputs.elements.add(this.outputs.elements.size() - 1,
-                            new NodeIOConfiguring("Unnamed output", key, this.uuid, false, false, NodeDescriptor.DataType.Item, Optional.of(Direction.NORTH), (btn4, state4) -> this.outputs.elements.removeIf(
+                            new NodeIOConfiguring("Unnamed output", key, this.uuid, this, false, false, NodeDescriptor.DataType.Item, Optional.of(Direction.NORTH), (btn4, state4) -> this.outputs.elements.removeIf(
                                     e -> e instanceof NodeIOConfiguring io && io.port.key.equals(key)
                             ))
                     );
@@ -407,7 +415,8 @@ public class RenderableGraphNode extends Renderable {
         }
 
         var childLayouts = new ArrayList<Layout>();
-
+        // unsure if needed
+//        w = Math.max(w, this.header.extractLayout(0, 0, 0).width());
         for (var c : this.children) {
             var childLayout = c.extractLayout(0, 0, 0);
             childLayouts.add(childLayout);
